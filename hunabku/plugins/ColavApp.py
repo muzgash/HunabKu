@@ -24,9 +24,35 @@ class ColavApp(HunabkuPluginBase):
         data = self.request.args.get('data')
         if not self.valid_apikey():
             return self.apikey_error()
-        if data=="info":
+        if data=="list":
             self.db = self.dbclient["antioquia"]
-            faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId("602599029e9b96dff8bf00ab")})
+            db_response=self.db['branches'].find({"type":"faculty"})
+            if db_response:
+                faculty_list=[]
+                for fac in db_response:
+                    entry={
+                        "name":fac["name"],
+                        "id":str(fac["_id"]),
+                        "abbreviations":fac["abbreviations"],
+                        "external_urls":fac["external_urls"]
+                    }
+                    faculty_list.append(entry)
+                print(faculty_list)
+                response = self.app.response_class(
+                response=self.json.dumps(faculty_list),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="info":
+            idx = self.request.args.get('id')
+            self.db = self.dbclient["antioquia"]
+            faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
             if faculty:
                 entry={"id":faculty["_id"],
                     "name":faculty["name"],
@@ -69,15 +95,13 @@ class ColavApp(HunabkuPluginBase):
                 response=self.json.dumps(entry),
                 status=200,
                 mimetype='application/json'
-            )
+                )
             else:
                 response = self.app.response_class(
                 response=self.json.dumps({"status":"Request returned empty"}),
                 status=204,
                 mimetype='application/json'
             )
-        elif data=="paper":
-            pass
         else:
             response = self.app.response_class(
                 response=self.json.dumps({}),
@@ -106,9 +130,35 @@ class ColavApp(HunabkuPluginBase):
         data = self.request.args.get('data')
         if not self.valid_apikey():
             return self.apikey_error()
-        if data=="info":
+        if data=="list":
             self.db = self.dbclient["antioquia"]
-            faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId("602599029e9b96dff8bf00ab")})
+            db_response=self.db['branches'].find({"type":"faculty"})
+            if db_response:
+                faculty_list=[]
+                for fac in db_response:
+                    entry={
+                        "name":fac["name"],
+                        "id":str(fac["_id"]),
+                        "abbreviations":fac["abbreviations"],
+                        "external_urls":fac["external_urls"]
+                    }
+                    faculty_list.append(entry)
+                print(faculty_list)
+                response = self.app.response_class(
+                response=self.json.dumps(faculty_list),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="info":
+            idx = self.request.args.get('id')
+            self.db = self.dbclient["antioquia"]
+            faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
             if faculty:
                 entry={"id":faculty["_id"],
                     "name":faculty["name"],
@@ -151,15 +201,13 @@ class ColavApp(HunabkuPluginBase):
                 response=self.json.dumps(entry),
                 status=200,
                 mimetype='application/json'
-            )
+                )
             else:
                 response = self.app.response_class(
                 response=self.json.dumps({"status":"Request returned empty"}),
                 status=204,
                 mimetype='application/json'
             )
-        elif data=="paper":
-            pass
         else:
             response = self.app.response_class(
                 response=self.json.dumps({}),
