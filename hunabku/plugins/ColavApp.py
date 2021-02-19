@@ -23,7 +23,7 @@ class ColavApp(HunabkuPluginBase):
         @apiError (Error 204) msg  The HTTP 204 No Content.
         @apiError (Error 401) msg  The HTTP 200 OK.
 
-        @apiSuccessExample {json} Success-Response (info=data):
+        @apiSuccessExample {json} Success-Response (data=info):
             HTTP/1.1 200 OK
             {
                 "id": "602c50d1fd74967db0663833",
@@ -68,7 +68,7 @@ class ColavApp(HunabkuPluginBase):
                     }
                 ]
                 }
-        @apiSuccessExample {json} Success-Response (info=list):
+        @apiSuccessExample {json} Success-Response (data=list):
             HTTP/1.1 200 OK
             [
                 {
@@ -96,7 +96,7 @@ class ColavApp(HunabkuPluginBase):
                     "id": "602599029e9b96dff8bf00ac"
                 }
             ]
-        @apiSuccessExample {json} Success-Response (info=paper):
+        @apiSuccessExample {json} Success-Response (data=paper):
         [
             {
                 "_id": "602ef788728ecc2d8e62d4f1",
@@ -945,7 +945,7 @@ class ColavApp(HunabkuPluginBase):
         @apiGroup CoLav app
         @apiDescription Responds with information about the faculty
 
-        @apiParam {String} data Wether is the general information or the list of papers
+        @apiParam {String} data (list,info) Wether is the general information or the list of faculties
         @apiParam {Object} id the id of the faculty requested in mongodb
         @apiParam {String} apikey  Credential for authentication
 
@@ -953,7 +953,7 @@ class ColavApp(HunabkuPluginBase):
         @apiError (Error 204) msg  The HTTP 204 No Content.
         @apiError (Error 401) msg  The HTTP 200 OK.
 
-        @apiSuccessExample {json} Success-Response (info=data):
+        @apiSuccessExample {json} Success-Response (data=info):
             HTTP/1.1 200 OK
             {
                 "id": "602c50d1fd74967db0663833",
@@ -998,7 +998,7 @@ class ColavApp(HunabkuPluginBase):
                     }
                 ]
                 }
-        @apiSuccessExample {json} Success-Response (info=list):
+        @apiSuccessExample {json} Success-Response (data=list):
             HTTP/1.1 200 OK
             [
                 {
