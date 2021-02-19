@@ -10,12 +10,12 @@ class ColavApp(HunabkuPluginBase):
     @endpoint('/api/faculty', methods=['GET'])
     def api_faculty(self):
         """
-        @api {get} /api/faculty Requests faculty general information or the list of papers
+        @api {get} /api/faculty Requests faculty general information, the list of faculties or the list of papers
         @apiName api
         @apiGroup CoLav api
         @apiDescription Responds with information about the faculty
 
-        @apiParam {String} data Wether is the general information or the list of papers
+        @apiParam {String} data (list,info,papers) Whether is the list of faculties, the general information or the list of papers from one of them
         @apiParam {Object} id the id of the faculty requested in mongodb
         @apiParam {String} apikey  Credential for authentication
 
@@ -933,13 +933,14 @@ class ColavApp(HunabkuPluginBase):
                 status=400,
                 mimetype='application/json'
             )
-        
+
+        response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
     @endpoint('/app/faculty', methods=['GET'])
     def app_faculty(self):
         """
-        @api {get} /app/faculty Requests faculty general information or the list of papers
+        @api {get} /app/faculty Requests faculty general information or the list of faculties
         @apiName app
         @apiGroup CoLav app
         @apiDescription Responds with information about the faculty
@@ -1135,6 +1136,7 @@ class ColavApp(HunabkuPluginBase):
                 status=400,
                 mimetype='application/json'
             )
-        
+
+        response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
