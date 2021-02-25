@@ -11,6 +11,18 @@ class ColavFacultyApi(HunabkuPluginBase):
         self.db = self.dbclient["antioquia"]
         papers=[]
         total=0
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
         if idx:
             if start_year and not end_year:
                 cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)})
@@ -22,11 +34,27 @@ class ColavFacultyApi(HunabkuPluginBase):
                 cursor=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)})
         else:
             cursor=self.db['documents'].find()
+
         total=cursor.count()
-        if max_results and page:
-            cursor=cursor.skip(max_results*(page-1)).limit(max_results)
+        if not page:
+            page=1
         else:
-            cursor=cursor.limit(100)
+            try:
+                page=int(page)
+            except:
+                print("Could not convert end page to int")
+                return None
+        if not max_results:
+            max_results=100
+        else:
+            try:
+                max_results=int(max_results)
+            except:
+                print("Could not convert end max to int")
+                return None
+
+        cursor=cursor.skip(max_results*(page-1)).limit(max_results)
+
         if sort=="citations" and direction=="ascending":
             cursor.sort({"citations_count":pymongo.ASCENDING})
         if sort=="citations" and direction=="descending":
@@ -67,7 +95,7 @@ class ColavFacultyApi(HunabkuPluginBase):
             papers.append(entry)
         return {"data":papers,"count":len(papers),"page":page,"total_results":total}
     
-    def get_info(self,id):
+    def get_info(self,idx):
         self.db = self.dbclient["antioquia"]
         faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
         if faculty:
@@ -132,9 +160,14 @@ class ColavFacultyApi(HunabkuPluginBase):
         @apiGroup CoLav api
         @apiDescription Responds with information about the faculty
 
-        @apiParam {String} data (list,info,papers) Whether is the list of faculties, the general information or the list of papers from one of them
-        @apiParam {Object} id the id of the faculty requested in mongodb
-        @apiParam {String} apikey  Credential for authentication
+        @apiParam {String} apikey Credential for authentication
+        @apiParam {String} data (info,production) Whether is the general information or the production
+        @apiParam {Object} id The mongodb id of the faculty requested
+        @apiParam {Int} start_year Retrieves result starting on this year
+        @apiParam {Int} end_year Retrieves results up to this year
+        @apiParam {Int} max Maximum results per page
+        @apiParam {Int} page Number of the page
+        @apiParam {String} sort (citations,year) Sorts the results by key in descending order
 
         @apiError (Error 401) msg  The HTTP 401 Unauthorized invalid authentication apikey for the target resource.
         @apiError (Error 204) msg  The HTTP 204 No Content.
@@ -185,35 +218,7 @@ class ColavFacultyApi(HunabkuPluginBase):
                     }
                 ]
                 }
-        @apiSuccessExample {json} Success-Response (data=list):
-            HTTP/1.1 200 OK
-            [
-                {
-                    "abbreviations": [
-                    "FCEN"
-                    ],
-                    "external_urls": [
-                    {
-                        "source": "website",
-                        "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                    }
-                    ],
-                    "name": "Facultad de ciencias exactas y naturales",
-                    "id": "602599029e9b96dff8bf00ab"
-                },
-                {
-                    "abbreviations": [],
-                    "external_urls": [
-                    {
-                        "source": "website",
-                        "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/institucional/unidades-academicas/facultades/ciencias-farmaceuticas-alimentarias"
-                    }
-                    ],
-                    "name": "Facultad de ciencias farmacéuticas y alimentarias",
-                    "id": "602599029e9b96dff8bf00ac"
-                }
-            ]
-        @apiSuccessExample {json} Success-Response (data=paper):
+        @apiSuccessExample {json} Success-Response (data=production):
         [
             {
                 "_id": "602ef788728ecc2d8e62d4f1",
@@ -254,14 +259,7 @@ class ColavFacultyApi(HunabkuPluginBase):
                 "keywords": [
                 "cluster analysis",
                 "probability distributions",
-                "random variables",
-                "yttrium alloys",
-                "beta distribution",
-                "bivariate distribution",
-                "gauss hypergeometric function",
-                "product",
-                "quotient",
-                "probability density function"
+                "random variables"
                 ],
                 "start_page": 105,
                 "end_page": 109,
@@ -382,10 +380,7 @@ class ColavFacultyApi(HunabkuPluginBase):
                     "aliases": [
                     "daya k. nagar",
                     "nagar d.k.",
-                    "arjun k. gupta",
-                    "arjun k gupta",
-                    "daya k nagar",
-                    "ak gupta"
+                    "daya k nagar"
                     ],
                     "affiliations": [
                     {
@@ -616,16 +611,7 @@ class ColavFacultyApi(HunabkuPluginBase):
                     "keywords": [
                     "beta distribution",
                     "bivariate distribution",
-                    "extended beta function",
-                    "extended confluent hypergeometric function",
-                    "gauss hypergeometric function",
-                    "product",
-                    "quotient",
-                    "confluent hypergeometric function",
-                    "extended gamma function",
-                    "gamma function",
-                    "macdonald distribution",
-                    "moment generating function"
+                    "extended beta function"
                     ],
                     "external_ids": [
                     {
@@ -798,17 +784,7 @@ class ColavFacultyApi(HunabkuPluginBase):
                     "keywords": [
                     "appell's second hypergeometric function",
                     "beta distribution",
-                    "confluent hypergeometric function",
-                    "gauss hypergeometric function",
-                    "gamma distribution",
-                    "transformation",
-                    "bivariate distribution",
-                    "dirichlet distribution",
-                    "hypergeometric function",
-                    "moments",
-                    "product",
-                    "positively quadrant dependent",
-                    "quotient"
+                    "confluent hypergeometric function"
                     ],
                     "external_ids": [
                     {
@@ -844,11 +820,7 @@ class ColavFacultyApi(HunabkuPluginBase):
                     "initials": "DK",
                     "aliases": [
                     "daya k. nagar",
-                    "nagar d.k.",
-                    "arjun k. gupta",
-                    "arjun k gupta",
-                    "daya k nagar",
-                    "ak gupta"
+                    "nagar d.k."
                     ],
                     "affiliations": [
                     {
@@ -863,11 +835,7 @@ class ColavFacultyApi(HunabkuPluginBase):
                     "keywords": [
                     "beta distribution",
                     "bivariate distribution",
-                    "extended beta function",
-                    "extended confluent hypergeometric function",
-                    "gauss hypergeometric function",
-                    "product",
-                    "quotient"
+                    "extended beta function"
                     ],
                     "external_ids": [
                     {
@@ -911,7 +879,7 @@ class ColavFacultyApi(HunabkuPluginBase):
             info = self.get_info(idx)
             if info:    
                 response = self.app.response_class(
-                response=self.json.dumps(entry),
+                response=self.json.dumps(info),
                 status=200,
                 mimetype='application/json'
                 )

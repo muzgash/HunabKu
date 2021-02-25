@@ -14,7 +14,7 @@ class ColavSearchApi(HunabkuPluginBase):
         @apiDescription Requests search of different entities in the CoLav database
 
         @apiParam {String} data Specifies the type of entity (or list of entities) to return, namely paper, institution, faculty, department, author
-        @apiParam {String} affiliation The related affiliation of the entity to return
+        @apiParam {String} affiliation The mongo if of the related affiliation of the entity to return
         @apiParam {String} apikey  Credential for authentication
 
         @apiError (Error 401) msg  The HTTP 401 Unauthorized invalid authentication apikey for the target resource.

@@ -116,8 +116,20 @@ class ColavFacultyApp(HunabkuPluginBase):
         total=cursor.count()
         if not page:
             page=1
+        else:
+            try:
+                page=int(page)
+            except:
+                print("Could not convert end page to int")
+                return None
         if not max_results:
             max_results=100
+        else:
+            try:
+                max_results=int(max_results)
+            except:
+                print("Could not convert end max to int")
+                return None
         cursor=cursor.skip(max_results*(page-1)).limit(max_results)
 
         if sort=="citations" and direction=="ascending":
@@ -194,9 +206,14 @@ class ColavFacultyApp(HunabkuPluginBase):
         @apiGroup CoLav app
         @apiDescription Responds with information about the faculty
 
-        @apiParam {String} data (info,production) Whether is the general information or the production
-        @apiParam {Object} id the mongodb id of the faculty requested
         @apiParam {String} apikey Credential for authentication
+        @apiParam {String} data (info,production) Whether is the general information or the production
+        @apiParam {Object} id The mongodb id of the faculty requested
+        @apiParam {Int} start_year Retrieves result starting on this year
+        @apiParam {Int} end_year Retrieves results up to this year
+        @apiParam {Int} max Maximum results per page
+        @apiParam {Int} page Number of the page
+        @apiParam {String} sort (citations,year) Sorts the results by key in descending order
 
         @apiError (Error 401) msg  The HTTP 401 Unauthorized invalid authentication apikey for the target resource.
         @apiError (Error 204) msg  The HTTP 204 No Content.
@@ -376,7 +393,7 @@ class ColavFacultyApp(HunabkuPluginBase):
             start_year=self.request.args.get('start_year')
             end_year=self.request.args.get('end_year')
             sort=self.request.args.get('sort')
-            production=self.get_production(idx,max_results,page,start_year,end_year,sort,"ascending")
+            production=self.get_production(idx,max_results,page,start_year,end_year,sort,"descending")
             if production:
                 response = self.app.response_class(
                 response=self.json.dumps(production),
