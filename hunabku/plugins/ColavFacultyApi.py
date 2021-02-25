@@ -1,16 +1,133 @@
 from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
-import pprint
+from pymongo import ASCENDING,DESCENDING
 
-class ColavApp(HunabkuPluginBase):
+class ColavFacultyApi(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
-        self.pretty_json=pprint.pformat('{"authors": [], "external_urls": [{"source": "website", "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"}], "type": "faculty", "groups": [], "institution": [], "id": "602599029e9b96dff8bf00ab", "departments": [{"name": "Decanatura facultad de ciencias exactas y naturales", "id": "602599059e9b96dff8bf00d5"}, {"name": "Instituto de matem\u00e1ticas", "id": "602599059e9b96dff8bf00d0"}, {"name": "Instituto de f\u00edsica", "id": "602599059e9b96dff8bf00d1"}, {"name": "Instituto de biolog\u00eda", "id": "602599059e9b96dff8bf00d2"}, {"name": "Instituto de qu\u00edmica", "id": "602599059e9b96dff8bf00d3"}, {"name": "Centro de investigaciones de ciencias exactas y naturales", "id": "602599059e9b96dff8bf00d4"}], "name": "Facultad de ciencias exactas y naturales"}')
+
+    
+    def get_papers(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
+        self.db = self.dbclient["antioquia"]
+        papers=[]
+        total=0
+        if idx:
+            if start_year and not end_year:
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)})
+            elif end_year and not start_year:
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
+            elif start_year and end_year:
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
+            else:
+                cursor=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)})
+        else:
+            cursor=self.db['documents'].find()
+        total=cursor.count()
+        if max_results and page:
+            cursor=cursor.skip(max_results*(page-1)).limit(max_results)
+        else:
+            cursor=cursor.limit(100)
+        if sort=="citations" and direction=="ascending":
+            cursor.sort({"citations_count":pymongo.ASCENDING})
+        if sort=="citations" and direction=="descending":
+            cursor.sort({"citations_count":pymongo.DESCENDING})
+        if sort=="year" and direction=="ascending":
+            cursor.sort({"year_published":pymongo.ASCENDING})
+        if sort=="year" and direction=="descending":
+            cursor.sort({"year_published":pymongo.DESCENDING})
+
+        for paper in cursor:
+            entry=paper
+            source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+            if source:
+                entry["source"]=source
+            authors=[]
+            for author in paper["authors"]:
+                au_entry=author
+                author_db=self.db["authors"].find_one({"_id":author["_id"]})
+                if author_db:
+                    au_entry=author_db
+                affiliations=[]
+                for aff in author["affiliations"]:
+                    aff_entry=aff
+                    aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
+                    if aff_db:
+                        aff_entry=aff_db
+                    branches=[]
+                    if "branches" in aff.keys():
+                        for branch in aff["branches"]:
+                            branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
+                            if branch_db:
+                                branches.append(branch_db)
+                    aff_entry["branches"]=branches
+                    affiliations.append(aff_entry)
+                au_entry["affiliations"]=affiliations
+                authors.append(au_entry)
+            entry["authors"]=authors
+            papers.append(entry)
+        return {"data":papers,"count":len(papers),"page":page,"total_results":total}
+    
+    def get_info(self,id):
+        self.db = self.dbclient["antioquia"]
+        faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
+        if faculty:
+            entry={"id":faculty["_id"],
+                "name":faculty["name"],
+                "type":faculty["type"],
+                "external_urls":faculty["external_urls"],
+                "departments":[],
+                "groups":[],
+                "authors":[],
+                "institution":[]
+            }
+            
+            inst_id=""
+            for rel in faculty["relations"]:
+                if rel["type"]=="university":
+                    inst_id=rel["id"]
+                    break
+            if inst_id:
+                inst=self.db['institutions'].find_one({"_id":inst_id})
+                if inst:
+                    entry["institution"]=[{"name":inst["name"],"id":inst_id}]#,"logo":inst["logo"]}]
+
+            for dep in self.db['branches'].find({"type":"department","relations.id":faculty["_id"]}):
+                dep_entry={
+                    "name":dep["name"],
+                    "id":str(dep["_id"])
+                }
+                entry["departments"].append(dep_entry)
+            for author in self.db['authors'].find({"branches.id":faculty["_id"]}):
+                author_entry={
+                    "full_name":author["full_name"],
+                    "id":str(author["_id"])
+                }
+                entry["authors"].append(author_entry)
+                for branch in author["branches"]:
+                    if branch["type"]=="group" and branch["id"]:
+                        branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
+                        entry_group={
+                            "id":branch["id"],
+                            "name":branch_db["name"]
+                        }
+                        if not entry_group in entry["groups"]:
+                            entry["groups"].append(entry_group)
+                    if branch["type"]=="department":
+                        branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
+                        entry_department={
+                            "id":branch["id"],
+                            "name":branch_db["name"]
+                        }
+                        if not entry_department in entry["departments"]:
+                            entry["departments"].append(entry_department)
+            return entry
+        else:
+            return None
 
     @endpoint('/api/faculty', methods=['GET'])
     def api_faculty(self):
         """
-        @api {get} /api/faculty Requests faculty general information, the list of faculties or the list of papers
+        @api {get} /api/faculty Faculty
         @apiName api
         @apiGroup CoLav api
         @apiDescription Responds with information about the faculty
@@ -21,7 +138,7 @@ class ColavApp(HunabkuPluginBase):
 
         @apiError (Error 401) msg  The HTTP 401 Unauthorized invalid authentication apikey for the target resource.
         @apiError (Error 204) msg  The HTTP 204 No Content.
-        @apiError (Error 401) msg  The HTTP 200 OK.
+        @apiError (Error 200) msg  The HTTP 200 OK.
 
         @apiSuccessExample {json} Success-Response (data=info):
             HTTP/1.1 200 OK
@@ -789,90 +906,10 @@ class ColavApp(HunabkuPluginBase):
         data = self.request.args.get('data')
         if not self.valid_apikey():
             return self.apikey_error()
-        if data=="list":
-            self.db = self.dbclient["antioquia"]
-            if "id" in self.request.args:
-                iid = self.request.args.get('id')
-                db_response=self.db['branches'].find({"type":"faculty","relations.id":ObjectId(iid)})
-            else:
-                db_response=self.db['branches'].find({"type":"faculty"})
-            if db_response:
-                faculty_list=[]
-                for fac in db_response:
-                    entry={
-                        "name":fac["name"],
-                        "id":str(fac["_id"]),
-                        "abbreviations":fac["abbreviations"],
-                        "external_urls":fac["external_urls"]
-                    }
-                    faculty_list.append(entry)
-                print(faculty_list)
-                response = self.app.response_class(
-                response=self.json.dumps(faculty_list),
-                status=200,
-                mimetype='application/json'
-                )
-            else:
-                response = self.app.response_class(
-                response=self.json.dumps({}),
-                status=204,
-                mimetype='application/json'
-                )
-        elif data=="info":
+        if data=="info":
             idx = self.request.args.get('id')
-            self.db = self.dbclient["antioquia"]
-            faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
-            if faculty:
-                entry={"id":faculty["_id"],
-                    "name":faculty["name"],
-                    "type":faculty["type"],
-                    "external_urls":faculty["external_urls"],
-                    "departments":[],
-                    "groups":[],
-                    "authors":[],
-                    "institution":[]
-                }
-                
-                inst_id=""
-                for rel in faculty["relations"]:
-                    if rel["type"]=="university":
-                        inst_id=rel["id"]
-                        break
-                if inst_id:
-                    inst=self.db['institutions'].find_one({"_id":inst_id})
-                    if inst:
-                        entry["institution"]=[{"name":inst["name"],"id":inst_id}]#,"logo":inst["logo"]}]
-
-                for dep in self.db['branches'].find({"type":"department","relations.id":faculty["_id"]}):
-                    dep_entry={
-                        "name":dep["name"],
-                        "id":str(dep["_id"])
-                    }
-                    entry["departments"].append(dep_entry)
-                for author in self.db['authors'].find({"branches.id":faculty["_id"]}):
-                    author_entry={
-                        "full_name":author["full_name"],
-                        "id":str(author["_id"])
-                    }
-                    entry["authors"].append(author_entry)
-                    for branch in author["branches"]:
-                        if branch["type"]=="group" and branch["id"]:
-                            branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
-                            entry_group={
-                                "id":branch["id"],
-                                "name":branch_db["name"]
-                            }
-                            if not entry_group in entry["groups"]:
-                                entry["groups"].append(entry_group)
-                        if branch["type"]=="department":
-                            branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
-                            entry_department={
-                                "id":branch["id"],
-                                "name":branch_db["name"]
-                            }
-                            if not entry_department in entry["departments"]:
-                                entry["departments"].append(entry_department)
-                
+            info = self.get_info(idx)
+            if info:    
                 response = self.app.response_class(
                 response=self.json.dumps(entry),
                 status=200,
@@ -886,236 +923,15 @@ class ColavApp(HunabkuPluginBase):
             )
         elif data=="papers":
             idx = self.request.args.get('id')
-            self.db = self.dbclient["antioquia"]
-            papers=[]
-            for paper in self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)}):
-                entry=paper
-                source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
-                if source:
-                    entry["source"]=source
-                authors=[]
-                for author in paper["authors"]:
-                    au_entry=author
-                    author_db=self.db["authors"].find_one({"_id":author["_id"]})
-                    if author_db:
-                        au_entry=author_db
-                    affiliations=[]
-                    for aff in author["affiliations"]:
-                        aff_entry=aff
-                        aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
-                        branches=[]
-                        if "branches" in aff.keys():
-                            for branch in aff["branches"]:
-                                branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
-                                if branch_db:
-                                    branches.append(branch_db)
-                        aff_entry["branches"]=branches
-                        affiliations.append(aff_entry)
-                    au_entry["affiliations"]=affiliations
-                    authors.append(au_entry)
-                entry["authors"]=authors
-                papers.append(entry)
+            max_results=self.request.args.get('max')
+            page=self.request.args.get('page')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            sort=self.request.args.get('sort')
+            papers=self.get_papers(idx,max_results,page,start_year,end_year,sort,"ascending")
             if papers:
                 response = self.app.response_class(
                 response=self.json.dumps(papers),
-                status=200,
-                mimetype='application/json'
-                )
-            #else:
-            #    response = self.app.response_class(
-            #    response=self.json.dumps({"status":"Request returned empty"}),
-            #    status=204,
-            #    mimetype='application/json
-            #    )
-        else:
-            response = self.app.response_class(
-                response=self.json.dumps({}),
-                status=400,
-                mimetype='application/json'
-            )
-
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response
-
-    @endpoint('/app/faculty', methods=['GET'])
-    def app_faculty(self):
-        """
-        @api {get} /app/faculty Requests faculty general information or the list of faculties
-        @apiName app
-        @apiGroup CoLav app
-        @apiDescription Responds with information about the faculty
-
-        @apiParam {String} data (list,info) Wether is the general information or the list of faculties
-        @apiParam {Object} id the id of the faculty requested in mongodb
-        @apiParam {String} apikey  Credential for authentication
-
-        @apiError (Error 401) msg  The HTTP 401 Unauthorized invalid authentication apikey for the target resource.
-        @apiError (Error 204) msg  The HTTP 204 No Content.
-        @apiError (Error 401) msg  The HTTP 200 OK.
-
-        @apiSuccessExample {json} Success-Response (data=info):
-            HTTP/1.1 200 OK
-            {
-                "id": "602c50d1fd74967db0663833",
-                "name": "Facultad de ciencias exactas y naturales",
-                "type": "faculty",
-                "external_urls": [
-                    {
-                    "source": "website",
-                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                    }
-                ],
-                "departments": [
-                    {
-                    "id": "602c50f9fd74967db0663858",
-                    "name": "Instituto de matemáticas"
-                    }
-                ],
-                "groups": [
-                    {
-                    "id": "602c510ffd74967db06639a7",
-                    "name": "Modelación con ecuaciones diferenciales"
-                    },
-                    {
-                    "id": "602c510ffd74967db06639ad",
-                    "name": "álgebra u de a"
-                    }
-                ],
-                "authors": [
-                    {
-                    "full_name": "Roberto Cruz Rodes",
-                    "id": "5fc5a419b246cc0887190a64"
-                    },
-                    {
-                    "full_name": "Jairo Eloy Castellanos Ramos",
-                    "id": "5fc5a4b7b246cc0887190a65"
-                    }
-                ],
-                "institution": [
-                    {
-                    "name": "University of Antioquia",
-                    "id": "60120afa4749273de6161883"
-                    }
-                ]
-                }
-        @apiSuccessExample {json} Success-Response (data=list):
-            HTTP/1.1 200 OK
-            [
-                {
-                    "abbreviations": [
-                    "FCEN"
-                    ],
-                    "external_urls": [
-                    {
-                        "source": "website",
-                        "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                    }
-                    ],
-                    "name": "Facultad de ciencias exactas y naturales",
-                    "id": "602599029e9b96dff8bf00ab"
-                },
-                {
-                    "abbreviations": [],
-                    "external_urls": [
-                    {
-                        "source": "website",
-                        "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/institucional/unidades-academicas/facultades/ciencias-farmaceuticas-alimentarias"
-                    }
-                    ],
-                    "name": "Facultad de ciencias farmacéuticas y alimentarias",
-                    "id": "602599029e9b96dff8bf00ac"
-                }
-            ]
-        """
-        data = self.request.args.get('data')
-        if not self.valid_apikey():
-            return self.apikey_error()
-        if data=="list":
-            self.db = self.dbclient["antioquia"]
-            if "id" in self.request.args:
-                iid = self.request.args.get('id')
-                db_response=self.db['branches'].find({"type":"faculty","relations.id":ObjectId(iid)})
-            else:
-                db_response=self.db['branches'].find({"type":"faculty"})
-            if db_response:
-                faculty_list=[]
-                for fac in db_response:
-                    entry={
-                        "name":fac["name"],
-                        "id":str(fac["_id"]),
-                        "abbreviations":fac["abbreviations"],
-                        "external_urls":fac["external_urls"]
-                    }
-                    faculty_list.append(entry)
-                print(faculty_list)
-                response = self.app.response_class(
-                response=self.json.dumps(faculty_list),
-                status=200,
-                mimetype='application/json'
-                )
-            else:
-                response = self.app.response_class(
-                response=self.json.dumps({}),
-                status=204,
-                mimetype='application/json'
-                )
-        elif data=="info":
-            idx = self.request.args.get('id')
-            self.db = self.dbclient["antioquia"]
-            faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
-            if faculty:
-                entry={"id":faculty["_id"],
-                    "name":faculty["name"],
-                    "type":faculty["type"],
-                    "external_urls":faculty["external_urls"],
-                    "departments":[],
-                    "groups":[],
-                    "authors":[],
-                    "institution":[]
-                }
-                
-                inst_id=""
-                for rel in faculty["relations"]:
-                    if rel["type"]=="university":
-                        inst_id=rel["id"]
-                        break
-                if inst_id:
-                    inst=self.db['institutions'].find_one({"_id":inst_id})
-                    if inst:
-                        entry["institution"]=[{"name":inst["name"],"id":inst_id}]#,"logo":inst["logo"]}]
-
-                for dep in self.db['branches'].find({"type":"department","relations.id":faculty["_id"]}):
-                    dep_entry={
-                        "name":dep["name"],
-                        "id":str(dep["_id"])
-                    }
-                    entry["departments"].append(dep_entry)
-                for author in self.db['authors'].find({"branches.id":faculty["_id"]}):
-                    author_entry={
-                        "full_name":author["full_name"],
-                        "id":str(author["_id"])
-                    }
-                    entry["authors"].append(author_entry)
-                    for branch in author["branches"]:
-                        if branch["type"]=="group" and branch["id"]:
-                            branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
-                            entry_group={
-                                "id":branch["id"],
-                                "name":branch_db["name"]
-                            }
-                            if not entry_group in entry["groups"]:
-                                entry["groups"].append(entry_group)
-                        if branch["type"]=="department":
-                            branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
-                            entry_department={
-                                "id":branch["id"],
-                                "name":branch_db["name"]
-                            }
-                            if not entry_department in entry["departments"]:
-                                entry["departments"].append(entry_department)
-                
-                response = self.app.response_class(
-                response=self.json.dumps(entry),
                 status=200,
                 mimetype='application/json'
                 )
@@ -1124,12 +940,7 @@ class ColavApp(HunabkuPluginBase):
                 response=self.json.dumps({"status":"Request returned empty"}),
                 status=204,
                 mimetype='application/json'
-            )
-        #elif data=="papers":
-        #    idx = self.request.args.get('id')
-        #    self.db = self.dbclient["antioquia"]
-        #    papers=[]
-
+                )
         else:
             response = self.app.response_class(
                 response=self.json.dumps({}),
@@ -1139,4 +950,3 @@ class ColavApp(HunabkuPluginBase):
 
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
-
