@@ -1,18 +1,18 @@
 from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 
-class ColavFacultyApp(HunabkuPluginBase):
+class ColavDepartmentApp(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
     def get_info(self,idx):
         self.db = self.dbclient["antioquia"]
-        faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
-        if faculty:
-            entry={"id":faculty["_id"],
-                "name":faculty["name"],
-                "type":faculty["type"],
-                "external_urls":faculty["external_urls"],
+        department = self.db['branches'].find_one({"type":"department","_id":ObjectId(idx)})
+        if department:
+            entry={"id":department["_id"],
+                "name":department["name"],
+                "type":department["type"],
+                "external_urls":department["external_urls"],
                 "departments":[],
                 "groups":[],
                 "authors":[],
@@ -20,7 +20,7 @@ class ColavFacultyApp(HunabkuPluginBase):
             }
             
             inst_id=""
-            for rel in faculty["relations"]:
+            for rel in department["relations"]:
                 if rel["type"]=="university":
                     inst_id=rel["id"]
                     break
@@ -29,13 +29,13 @@ class ColavFacultyApp(HunabkuPluginBase):
                 if inst:
                     entry["institution"]=[{"name":inst["name"],"id":inst_id}]#,"logo":inst["logo"]}]
 
-            for dep in self.db['branches'].find({"type":"department","relations.id":faculty["_id"]}):
+            for dep in self.db['branches'].find({"type":"department","relations.id":department["_id"]}):
                 dep_entry={
                     "name":dep["name"],
                     "id":str(dep["_id"])
                 }
                 entry["departments"].append(dep_entry)
-            for author in self.db['authors'].find({"branches.id":faculty["_id"]}):
+            for author in self.db['authors'].find({"branches.id":department["_id"]}):
                 author_entry={
                     "full_name":author["full_name"],
                     "id":str(author["_id"])
@@ -198,17 +198,17 @@ class ColavFacultyApp(HunabkuPluginBase):
             "open_access":open_access,
             "venn_source":venn_source}
 
-    @endpoint('/app/faculty', methods=['GET'])
-    def app_faculty(self):
+    @endpoint('/app/department', methods=['GET'])
+    def app_department(self):
         """
-        @api {get} /app/faculty Faculty
+        @api {get} /app/department Department
         @apiName app
         @apiGroup CoLav app
-        @apiDescription Responds with information about the faculty
+        @apiDescription Responds with information about the department
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production
-        @apiParam {Object} id The mongodb id of the faculty requested
+        @apiParam {Object} id The mongodb id of the department requested
         @apiParam {Int} start_year Retrieves result starting on this year
         @apiParam {Int} end_year Retrieves results up to this year
         @apiParam {Int} max Maximum results per page
@@ -269,95 +269,154 @@ class ColavFacultyApp(HunabkuPluginBase):
             {
                 "data": [
                     {
-                    "_id": "602ef78d728ecc2d8e62d507",
-                    "title": "CrVN/TiN nanoscale multilayer coatings deposited by DC unbalanced magnetron sputtering",
+                    "_id": "602ef784728ecc2d8e62d4e0",
+                    "title": "A randomized clinical trial of unfractioned heparin for treatment of sepsis (the HETRASE study): design and rationale [NCT00100308]",
                     "source": {
-                        "name": "Surface & Coatings Technology",
-                        "_id": "602ef78d728ecc2d8e62d503"
+                        "name": "Trials",
+                        "_id": "600f50261fc9947fc8a8dd6c"
                     },
                     "authors": [
                         {
-                        "full_name": "E. Contreras",
-                        "_id": "602ef78d728ecc2d8e62d504",
+                        "full_name": "Fabian Alberto Jaimes Barragan",
+                        "_id": "5fcec8bb3d00fffc91d2a658",
                         "affiliations": [
                             {
-                            "name": "University of Antioquia",
-                            "_id": "60120afa4749273de6161883",
+                            "name": "Johns Hopkins University",
+                            "_id": "60120ad54749273de6160481",
                             "branches": []
-                            }
-                        ]
-                        },
-                        {
-                        "full_name": "Y. Galindez",
-                        "_id": "602ef78d728ecc2d8e62d505",
-                        "affiliations": [
-                            {
-                            "name": "University of Antioquia",
-                            "_id": "60120afa4749273de6161883",
-                            "branches": []
-                            }
-                        ]
-                        },
-                        {
-                        "full_name": "M.A. Rodas",
-                        "_id": "602ef78d728ecc2d8e62d506",
-                        "affiliations": [
-                            {
-                            "name": "University of Antioquia",
-                            "_id": "60120afa4749273de6161883",
-                            "branches": []
-                            }
-                        ]
-                        },
-                        {
-                        "full_name": "Gilberto Bejarano Gaitan",
-                        "_id": "5fca32c2eccc163512fee4e1",
-                        "affiliations": [
+                            },
                             {
                             "name": "University of Antioquia",
                             "_id": "60120afa4749273de6161883",
                             "branches": [
                                 {
-                                "name": "Facultad de ingeniería",
+                                "name": "Facultad de medicina",
                                 "type": "faculty",
-                                "_id": "602c50d1fd74967db066383a"
+                                "_id": "602c50d1fd74967db066383b"
                                 },
                                 {
-                                "name": "Departamento de ingeniería metalúrgica",
+                                "name": "Departamento de medicina interna",
                                 "type": "department",
-                                "_id": "602c50f9fd74967db0663884"
+                                "_id": "602c50f9fd74967db0663895"
                                 },
                                 {
-                                "name": "Centro de investigación, innovación y desarrollo de materiales",
+                                "name": "Grupo académico de epidemiología clínica",
                                 "type": "group",
-                                "_id": "602c510ffd74967db06638dc"
+                                "_id": "602c510ffd74967db0663947"
                                 }
                             ]
                             }
                         ]
                         },
                         {
-                        "full_name": "Maryory Astrid Gomez Botero",
-                        "_id": "5fca3dcfeccc163512fee4e2",
+                        "full_name": "Gisela De La Rosa",
+                        "_id": "602ef784728ecc2d8e62d4dd",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": []
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Clara Maria Arango Toro",
+                        "_id": "5fceb6163d00fffc91d2a641",
                         "affiliations": [
                             {
                             "name": "University of Antioquia",
                             "_id": "60120afa4749273de6161883",
                             "branches": [
                                 {
-                                "name": "Facultad de ingeniería",
+                                "name": "Facultad de medicina",
                                 "type": "faculty",
-                                "_id": "602c50d1fd74967db066383a"
+                                "_id": "602c50d1fd74967db066383b"
                                 },
                                 {
-                                "name": "Departamento de ingeniería metalúrgica",
+                                "name": "Departamento de medicina interna",
                                 "type": "department",
-                                "_id": "602c50f9fd74967db0663884"
+                                "_id": "602c50f9fd74967db0663895"
                                 },
                                 {
-                                "name": "Centro de investigación, innovación y desarrollo de materiales",
+                                "name": "Grupo endocrinología y metabolismo",
                                 "type": "group",
-                                "_id": "602c510ffd74967db06638dc"
+                                "_id": "602c510ffd74967db0663a13"
+                                }
+                            ]
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Fernando Fortich",
+                        "_id": "602ef784728ecc2d8e62d4de",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": []
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Carlos H. Morales",
+                        "_id": "602ef784728ecc2d8e62d4df",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": []
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Daniel Camilo Aguirre Acevedo",
+                        "_id": "5fcf8d123d00fffc91d2a6be",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": [
+                                {
+                                "name": "Facultad de medicina",
+                                "type": "faculty",
+                                "_id": "602c50d1fd74967db066383b"
+                                },
+                                {
+                                "name": "Instituto de investigaciones médicas",
+                                "type": "department",
+                                "_id": "602c50f9fd74967db066389e"
+                                },
+                                {
+                                "name": "Inmunodeficiencias primarias",
+                                "type": "group",
+                                "_id": "602c510ffd74967db0663969"
+                                }
+                            ]
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Pablo Javier Patiño Grajales",
+                        "_id": "5fce960f3d00fffc91d2a62c",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": [
+                                {
+                                "name": "Facultad de medicina",
+                                "type": "faculty",
+                                "_id": "602c50d1fd74967db066383b"
+                                },
+                                {
+                                "name": "Departamento de microbiología y parasitología",
+                                "type": "department",
+                                "_id": "602c50f9fd74967db0663894"
+                                },
+                                {
+                                "name": "Inmunodeficiencias primarias",
+                                "type": "group",
+                                "_id": "602c510ffd74967db0663969"
                                 }
                             ]
                             }
@@ -366,16 +425,16 @@ class ColavFacultyApp(HunabkuPluginBase):
                     ]
                     }
                 ],
-                "count": 82,
+                "count": 44,
                 "page": 1,
-                "total_results": 82,
-                "initial_year": 2000,
-                "final_year": 2020,
+                "total_results": 44,
+                "initial_year": 1997,
+                "final_year": 2019,
                 "open_access": {
-                    "green": 7,
-                    "gold": 24,
-                    "bronze": 1,
-                    "closed": 49,
+                    "green": 3,
+                    "gold": 16,
+                    "bronze": 7,
+                    "closed": 17,
                     "hybrid": 1
                 },
                 "venn_source": {
@@ -384,10 +443,10 @@ class ColavFacultyApp(HunabkuPluginBase):
                     "oadoi": 0,
                     "wos": 0,
                     "scopus": 0,
-                    "lens_scholar_scopus": 26,
-                    "lens_scholar": 9,
-                    "lens_wos_scholar_scopus": 44,
-                    "lens_wos_scholar": 3
+                    "lens_wos_scholar_scopus": 34,
+                    "lens_scholar": 5,
+                    "lens_scholar_scopus": 4,
+                    "lens_wos_scholar": 1
                 }
                 }
         """
