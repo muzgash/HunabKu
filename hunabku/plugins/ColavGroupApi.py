@@ -58,13 +58,13 @@ class ColavGroupApi(HunabkuPluginBase):
         cursor=cursor.skip(max_results*(page-1)).limit(max_results)
 
         if sort=="citations" and direction=="ascending":
-            cursor.sort({"citations_count":pymongo.ASCENDING})
+            cursor.sort([("citations_count",ASCENDING)])
         if sort=="citations" and direction=="descending":
-            cursor.sort({"citations_count":pymongo.DESCENDING})
+            cursor.sort([("citations_count",DESCENDING)])
         if sort=="year" and direction=="ascending":
-            cursor.sort({"year_published":pymongo.ASCENDING})
+            cursor.sort([("year_published",ASCENDING)])
         if sort=="year" and direction=="descending":
-            cursor.sort({"year_published":pymongo.DESCENDING})
+            cursor.sort([("year_published",DESCENDING)])
 
         for paper in cursor:
             entry=paper
@@ -742,7 +742,7 @@ class ColavGroupApi(HunabkuPluginBase):
             start_year=self.request.args.get('start_year')
             end_year=self.request.args.get('end_year')
             sort=self.request.args.get('sort')
-            papers=self.get_production(idx,max_results,page,start_year,end_year,sort,"ascending")
+            papers=self.get_production(idx,max_results,page,start_year,end_year,sort,"descending")
             if papers:
                 response = self.app.response_class(
                 response=self.json.dumps(papers),

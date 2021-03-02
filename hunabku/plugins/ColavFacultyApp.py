@@ -1,5 +1,6 @@
 from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
+from pymongo import ASCENDING,DESCENDING
 
 class ColavFacultyApp(HunabkuPluginBase):
     def __init__(self, hunabku):
@@ -133,13 +134,13 @@ class ColavFacultyApp(HunabkuPluginBase):
         cursor=cursor.skip(max_results*(page-1)).limit(max_results)
 
         if sort=="citations" and direction=="ascending":
-            cursor.sort({"citations_count":pymongo.ASCENDING})
+            cursor.sort([("citations_count",ASCENDING)])
         if sort=="citations" and direction=="descending":
-            cursor.sort({"citations_count":pymongo.DESCENDING})
+            cursor.sort([("citations_count",DESCENDING)])
         if sort=="year" and direction=="ascending":
-            cursor.sort({"year_published":pymongo.ASCENDING})
+            cursor.sort([("year_published",ASCENDING)])
         if sort=="year" and direction=="descending":
-            cursor.sort({"year_published":pymongo.DESCENDING})
+            cursor.sort([("year_published",DESCENDING)])
 
         for paper in cursor:
             entry={
