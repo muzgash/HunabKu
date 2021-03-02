@@ -11,7 +11,7 @@ class ColavSearchApi(HunabkuPluginBase):
         @api {get} /api/search Search
         @apiName api
         @apiGroup CoLav api
-        @apiDescription Requests search of different entities in the CoLav database
+        @apiDescription UNDER CONSTRUCTION
 
         @apiParam {String} data Specifies the type of entity (or list of entities) to return, namely paper, institution, faculty, department, author
         @apiParam {String} affiliation The mongo if of the related affiliation of the entity to return

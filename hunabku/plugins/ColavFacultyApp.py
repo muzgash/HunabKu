@@ -264,7 +264,7 @@ class ColavFacultyApp(HunabkuPluginBase):
                     }
                 ]
                 }
-        @apiSuccessExample {json} Success-Response (data=papers):
+        @apiSuccessExample {json} Success-Response (data=production):
             {
                 "data": [
                     {

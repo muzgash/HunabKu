@@ -52,6 +52,8 @@ class ColavFacultyApi(HunabkuPluginBase):
             except:
                 print("Could not convert end max to int")
                 return None
+        if max_results>500:
+            max_results=500
 
         cursor=cursor.skip(max_results*(page-1)).limit(max_results)
 
@@ -66,26 +68,50 @@ class ColavFacultyApi(HunabkuPluginBase):
 
         for paper in cursor:
             entry=paper
+            del(entry["abstract_idx"])
+            for title in entry["titles"]:
+                del(title["title_idx"])
             source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
             if source:
+                del(source["title_idx"])
+                del(source["publisher_idx"])
                 entry["source"]=source
             authors=[]
             for author in paper["authors"]:
                 au_entry=author
+                if "national_id" in au_entry.keys():
+                    del(au_entry["national_id"])
                 author_db=self.db["authors"].find_one({"_id":author["_id"]})
                 if author_db:
                     au_entry=author_db
+                if "aliases" in au_entry.keys():
+                    del(au_entry["aliases"])
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry=aff
                     aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
                     if aff_db:
                         aff_entry=aff_db
+                    if "name_idx" in aff_entry.keys():
+                        del(aff_entry["name_idx"])
+                    if "addresses" in aff_entry.keys():
+                        for add in aff_entry["addresses"]:
+                            if "geonames_city" in add.keys():
+                                del(add["geonames_city"])
+                    if "aliases" in aff_entry.keys():
+                        del(aff_entry["aliases"])
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
                             branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
                             if branch_db:
+                                del(branch_db["aliases"])
+                                del(branch_db["name_idx"])
+                                if "addresses" in branch_db.keys():
+                                    for add in branch_db["addresses"]:
+                                        del(add["geonames_city"])
+                                if "aliases" in branch_db.keys():
+                                    del(branch_db["aliases"])
                                 branches.append(branch_db)
                     aff_entry["branches"]=branches
                     affiliations.append(aff_entry)
@@ -119,12 +145,6 @@ class ColavFacultyApi(HunabkuPluginBase):
                 if inst:
                     entry["institution"]=[{"name":inst["name"],"id":inst_id}]#,"logo":inst["logo"]}]
 
-            for dep in self.db['branches'].find({"type":"department","relations.id":faculty["_id"]}):
-                dep_entry={
-                    "name":dep["name"],
-                    "id":str(dep["_id"])
-                }
-                entry["departments"].append(dep_entry)
             for author in self.db['authors'].find({"branches.id":faculty["_id"]}):
                 author_entry={
                     "full_name":author["full_name"],

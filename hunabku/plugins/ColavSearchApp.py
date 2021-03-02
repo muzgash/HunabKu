@@ -5,6 +5,24 @@ class ColavSearchApp(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
+    def search_branch(self,branch,iid=None):
+        self.db = self.dbclient["antioquia"]
+        if iid:
+            db_response=self.db['branches'].find({"type":branch,"relations.id":ObjectId(iid)})
+        else:
+            db_response=self.db['branches'].find({"type":branch})
+        if db_response:
+            entity_list=[]
+            for entity in db_response:
+                entry={
+                    "name":entity["name"],
+                    "id":str(entity["_id"]),
+                    "abbreviations":entity["abbreviations"],
+                    "external_urls":entity["external_urls"]
+                }
+                entity_list.append(entry)
+        return entity_list
+
     @endpoint('/app/search', methods=['GET'])
     def app_search(self):
         """
@@ -77,33 +95,37 @@ class ColavSearchApp(HunabkuPluginBase):
         if not self.valid_apikey():
             return self.apikey_error()
         if data=="faculty":
-            self.db = self.dbclient["antioquia"]
             if "id" in self.request.args:
                 iid = self.request.args.get('id')
-                db_response=self.db['branches'].find({"type":"faculty","relations.id":ObjectId(iid)})
+                result=self.search_branch("faculty",iid)
             else:
-                db_response=self.db['branches'].find({"type":"faculty"})
-            if db_response:
-                faculty_list=[]
-                for fac in db_response:
-                    entry={
-                        "name":fac["name"],
-                        "id":str(fac["_id"]),
-                        "abbreviations":fac["abbreviations"],
-                        "external_urls":fac["external_urls"]
-                    }
-                    faculty_list.append(entry)
-                response = self.app.response_class(
-                response=self.json.dumps(faculty_list),
-                status=200,
-                mimetype='application/json'
-                )
+                result=self.search_branch("faculty")
+        elif data=="department":
+            if "id" in self.request.args:
+                iid = self.request.args.get('id')
+                result=self.search_branch("department",iid)
             else:
-                response = self.app.response_class(
-                response=self.json.dumps({}),
-                status=204,
-                mimetype='application/json'
-                )
+                result=self.search_branch("department")
+        elif data=="group":
+            if "id" in self.request.args:
+                iid = self.request.args.get('id')
+                result=self.search_branch("group",iid)
+            else:
+                result=self.search_branch("group")
+        else:
+            result=None
+        if result:
+            response = self.app.response_class(
+            response=self.json.dumps(result),
+            status=200,
+            mimetype='application/json'
+            )
+        else:
+            response = self.app.response_class(
+            response=self.json.dumps({}),
+            status=204,
+            mimetype='application/json'
+            )
         
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
