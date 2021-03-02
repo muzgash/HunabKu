@@ -79,13 +79,13 @@ class ColavDepartmentApi(HunabkuPluginBase):
             authors=[]
             for author in paper["authors"]:
                 au_entry=author
-                if "national_id" in au_entry.keys():
-                    del(au_entry["national_id"])
                 author_db=self.db["authors"].find_one({"_id":author["_id"]})
                 if author_db:
                     au_entry=author_db
                 if "aliases" in au_entry.keys():
                     del(au_entry["aliases"])
+                if "national_id" in au_entry.keys():
+                    del(au_entry["national_id"])
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry=aff
