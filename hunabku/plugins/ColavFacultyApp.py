@@ -194,10 +194,13 @@ class ColavFacultyApp(HunabkuPluginBase):
             "count":len(papers),
             "page":page,
             "total_results":total,
-            "initial_year":initial_year,
-            "final_year":final_year,
-            "open_access":open_access,
-            "venn_source":venn_source}
+            "filters":{
+                "initial_year":initial_year,
+                "final_year":final_year,
+                "open_access":open_access,
+                "venn_source":venn_source
+                }
+            }
 
     @endpoint('/app/faculty', methods=['GET'])
     def app_faculty(self):
@@ -264,7 +267,7 @@ class ColavFacultyApp(HunabkuPluginBase):
                     "id": "60120afa4749273de6161883"
                     }
                 ]
-                }
+            }
         @apiSuccessExample {json} Success-Response (data=production):
             HTTP/1.1 200 OK
             {

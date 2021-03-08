@@ -171,10 +171,13 @@ class ColavGroupApp(HunabkuPluginBase):
             "count":len(papers),
             "page":page,
             "total_results":total,
-            "initial_year":initial_year,
-            "final_year":final_year,
-            "open_access":open_access,
-            "venn_source":venn_source}
+            "filters":{
+                "initial_year":initial_year,
+                "final_year":final_year,
+                "open_access":open_access,
+                "venn_source":venn_source
+                }
+            }
 
     @endpoint('/app/group', methods=['GET'])
     def app_group(self):
