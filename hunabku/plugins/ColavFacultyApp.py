@@ -403,7 +403,7 @@ class ColavFacultyApp(HunabkuPluginBase):
             info = self.get_info(idx)
             if info:    
                 response = self.app.response_class(
-                response=self.json.dumps(entry),
+                response=self.json.dumps(info),
                 status=200,
                 mimetype='application/json'
                 )
