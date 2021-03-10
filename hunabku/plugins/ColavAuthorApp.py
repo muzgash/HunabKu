@@ -1,43 +1,58 @@
 from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
-from pymongo import ASCENDING,DESCENDING
 
-class ColavGroupApp(HunabkuPluginBase):
+class ColavAuthorApp(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
     def get_info(self,idx):
         self.db = self.dbclient["antioquia"]
-        group = self.db['branches'].find_one({"type":"group","_id":ObjectId(idx)})
-        if group:
-            entry={"id":group["_id"],
-                "name":group["name"],
-                "type":group["type"],
-                "abbreviations":"",
-                "external_urls":group["external_urls"],
-                "departments":[],
-                "groups":[],
-                "authors":[],
-                "institution":[]
+        author = self.db['authors'].find_one({"_id":ObjectId(idx)})
+        if author:
+            entry={"id":author["_id"],
+                "full_name":author["full_name"],
+                "affiliation":author["affiliations"][-1],
+                "country":"",
+                "faculty":{},
+                "department":{},
+                "group":{},
+                "external_urls":[],
             }
-            if len(group["abbreviations"])>0:
-                entry["abbreviations"]=group["abbreviations"][0]
-            inst_id=""
-            for rel in group["relations"]:
-                if rel["type"]=="university":
-                    inst_id=rel["id"]
-                    break
-            if inst_id:
-                inst=self.db['institutions'].find_one({"_id":inst_id})
-                if inst:
-                    entry["institution"]=[{"name":inst["name"],"id":inst_id,"logo":""}]
+            if entry["affiliation"]:
+                inst_db=self.db["institutions"].find_one({"_id":ObjectId(entry["affiliation"]["id"])})
+                if inst_db:
+                    entry["country"]=inst_db["addresses"][0]["country"]
+            sources=[]
+            for ext in author["external_ids"]:
+                if ext["source"]=="researchid" and not "researcherid" in sources:
+                    sources.append("researcherid")
+                    entry["external_urls"].append({
+                        "source":"researcherid",
+                        "url":"https://publons.com/researcher/"+ext["value"]})
+                if ext["source"]=="scopus" and not "scopus" in sources:
+                    sources.append("scopus")
+                    entry["external_urls"].append({
+                        "source":"scopus",
+                        "url":"https://www.scopus.com/authid/detail.uri?authorId="+ext["value"]})
+                if ext["source"]=="scholar" and not "scholar" in sources:
+                    sources.append("scholar")
+                    entry["external_urls"].append({
+                        "source":"scholar",
+                        "url":"https://scholar.google.com.co/citations?user="+ext["value"]})
+                if ext["source"]=="orcid" and not "orcid" in sources:
+                    sources.append("orcid")
+                    entry["external_urls"].append({
+                        "source":"orcid",
+                        "url":"https://orcid.org/"+ext["value"]})
 
-            for author in self.db['authors'].find({"branches.id":group["_id"]}):
-                author_entry={
-                    "full_name":author["full_name"],
-                    "id":str(author["_id"])
-                }
-                entry["authors"].append(author_entry)
+            for branch in author["branches"]:
+                if branch["type"]=="faculty":
+                    entry["faculty"]=branch
+                elif branch["type"]=="department":
+                    entry["department"]=branch
+                elif branch["type"]=="group":
+                    entry["group"]=branch
+
             return entry
         else:
             return None
@@ -64,33 +79,33 @@ class ColavGroupApp(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})}
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})}
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})}
             else:
-                cursor=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors.affiliations.branches._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors.affiliations.branches._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors.affiliations.branches._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors.affiliations.branches._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors.affiliations.branches._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"authors._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors._id":ObjectId(idx)})}
         else:
             cursor=self.db['documents'].find()
         total=cursor.count()
@@ -113,13 +128,13 @@ class ColavGroupApp(HunabkuPluginBase):
         cursor=cursor.skip(max_results*(page-1)).limit(max_results)
 
         if sort=="citations" and direction=="ascending":
-            cursor.sort([("citations_count",ASCENDING)])
+            cursor.sort({"citations_count":pymongo.ASCENDING})
         if sort=="citations" and direction=="descending":
-            cursor.sort([("citations_count",DESCENDING)])
+            cursor.sort({"citations_count":pymongo.DESCENDING})
         if sort=="year" and direction=="ascending":
-            cursor.sort([("year_published",ASCENDING)])
+            cursor.sort({"year_published":pymongo.ASCENDING})
         if sort=="year" and direction=="descending":
-            cursor.sort([("year_published",DESCENDING)])
+            cursor.sort({"year_published":pymongo.DESCENDING})
 
         for paper in cursor:
             entry={
@@ -177,25 +192,22 @@ class ColavGroupApp(HunabkuPluginBase):
             "count":len(papers),
             "page":page,
             "total_results":total,
-            "filters":{
-                "initial_year":initial_year,
-                "final_year":final_year,
-                "open_access":open_access,
-                "venn_source":venn_source
-                }
-            }
+            "initial_year":initial_year,
+            "final_year":final_year,
+            "open_access":open_access,
+            "venn_source":venn_source}
 
-    @endpoint('/app/group', methods=['GET'])
-    def app_group(self):
+    @endpoint('/app/author', methods=['GET'])
+    def app_author(self):
         """
-        @api {get} /app/group Group
+        @api {get} /app/author Author
         @apiName app
         @apiGroup CoLav app
-        @apiDescription Responds with information about the group
+        @apiDescription Responds with information about the author
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production
-        @apiParam {Object} id The mongodb id of the group requested
+        @apiParam {Object} id The mongodb id of the author requested
         @apiParam {Int} start_year Retrieves result starting on this year
         @apiParam {Int} end_year Retrieves results up to this year
         @apiParam {Int} max Maximum results per page
@@ -211,7 +223,7 @@ class ColavGroupApp(HunabkuPluginBase):
             {
                 "id": "602c50d1fd74967db0663833",
                 "name": "Facultad de ciencias exactas y naturales",
-                "type": "faculty",
+                "type": "author",
                 "external_urls": [
                     {
                     "source": "website",
@@ -252,31 +264,19 @@ class ColavGroupApp(HunabkuPluginBase):
                 ]
                 }
         @apiSuccessExample {json} Success-Response (data=production):
-            HTTP/1.1 200 OK
             {
                 "data": [
                     {
-                    "_id": "602ef9dd728ecc2d8e62e030",
-                    "title": "Comments on the Riemann conjecture and index theory on Cantorian fractal space-time",
+                    "_id": "602ef788728ecc2d8e62d4f1",
+                    "title": "Product and quotient of correlated beta variables",
                     "source": {
-                        "name": "Chaos Solitons & Fractals",
-                        "_id": "602ef9dd728ecc2d8e62e02d"
+                        "name": "Applied Mathematics Letters",
+                        "_id": "602ef788728ecc2d8e62d4ef"
                     },
                     "authors": [
                         {
-                        "full_name": "Carlos Castro",
-                        "_id": "602ef9dd728ecc2d8e62e02f",
-                        "affiliations": [
-                            {
-                            "name": "Center for Theoretical Studies, University of Miami",
-                            "_id": "602ef9dd728ecc2d8e62e02e",
-                            "branches": []
-                            }
-                        ]
-                        },
-                        {
-                        "full_name": "Jorge Eduardo Mahecha Gomez",
-                        "_id": "5fc65863b246cc0887190a9f",
+                        "full_name": "Daya Krishna Nagar",
+                        "_id": "5fc5b0a5b246cc0887190a69",
                         "affiliations": [
                             {
                             "name": "University of Antioquia",
@@ -288,33 +288,71 @@ class ColavGroupApp(HunabkuPluginBase):
                                 "_id": "602c50d1fd74967db0663833"
                                 },
                                 {
-                                "name": "Instituto de física",
+                                "name": "Instituto de matemáticas",
                                 "type": "department",
-                                "_id": "602c50f9fd74967db0663859"
+                                "_id": "602c50f9fd74967db0663858"
                                 },
                                 {
-                                "name": "Grupo de física atómica y molecular",
+                                "name": "Análisis multivariado",
                                 "type": "group",
-                                "_id": "602c510ffd74967db06638fb"
+                                "_id": "602c510ffd74967db06638d6"
                                 }
                             ]
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Johanna Marcela Orozco Castañeda",
+                        "_id": "5fc5bebab246cc0887190a70",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": [
+                                {
+                                "name": "Facultad de ciencias exactas y naturales",
+                                "type": "faculty",
+                                "_id": "602c50d1fd74967db0663833"
+                                },
+                                {
+                                "name": "Instituto de matemáticas",
+                                "type": "department",
+                                "_id": "602c50f9fd74967db0663858"
+                                }
+                            ]
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Daya Krishna Nagar",
+                        "_id": "5fc5b0a5b246cc0887190a69",
+                        "affiliations": [
+                            {
+                            "name": "Bowling Green State University",
+                            "_id": "60120add4749273de616099f",
+                            "branches": []
+                            },
+                            {
+                            "name": "Univ Antioquia",
+                            "_id": "602ef788728ecc2d8e62d4f0",
+                            "branches": []
                             }
                         ]
                         }
                     ]
                     }
                 ],
-                "count": 3,
+                "count": 73,
                 "page": 1,
-                "total_results": 3,
-                "initial_year": 2002,
-                "final_year": 2014,
+                "total_results": 73,
+                "initial_year": 1995,
+                "final_year": 2017,
                 "open_access": {
-                    "green": 2,
-                    "gold": 0,
-                    "bronze": 1,
-                    "closed": 0,
-                    "hybrid": 0
+                    "green": 9,
+                    "gold": 17,
+                    "bronze": 6,
+                    "closed": 39,
+                    "hybrid": 2
                 },
                 "venn_source": {
                     "scholar": 0,
@@ -322,7 +360,10 @@ class ColavGroupApp(HunabkuPluginBase):
                     "oadoi": 0,
                     "wos": 0,
                     "scopus": 0,
-                    "lens_wos_scholar_scopus": 3
+                    "lens_wos_scholar_scopus": 55,
+                    "lens_scholar": 6,
+                    "lens_scholar_scopus": 6,
+                    "lens_wos_scholar": 6
                 }
                 }
         """

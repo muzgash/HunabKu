@@ -13,13 +13,15 @@ class ColavFacultyApp(HunabkuPluginBase):
             entry={"id":faculty["_id"],
                 "name":faculty["name"],
                 "type":faculty["type"],
+                "abbreviations":"",
                 "external_urls":faculty["external_urls"],
                 "departments":[],
                 "groups":[],
                 "authors":[],
                 "institution":[]
             }
-            
+            if len(faculty["abbreviations"])>0:
+                entry["abbreviations"]=faculty["abbreviations"][0]
             inst_id=""
             for rel in faculty["relations"]:
                 if rel["type"]=="university":
@@ -28,7 +30,7 @@ class ColavFacultyApp(HunabkuPluginBase):
             if inst_id:
                 inst=self.db['institutions'].find_one({"_id":inst_id})
                 if inst:
-                    entry["institution"]=[{"name":inst["name"],"id":inst_id}]#,"logo":inst["logo"]}]
+                    entry["institution"]=[{"name":inst["name"],"id":inst_id,"logo":""}]
 
             for dep in self.db['branches'].find({"type":"department","relations.id":faculty["_id"]}):
                 dep_entry={
@@ -146,6 +148,8 @@ class ColavFacultyApp(HunabkuPluginBase):
             entry={
                 "_id":paper["_id"],
                 "title":paper["titles"][0]["title"],
+                "citations_count":paper["citations_count"],
+                "year_published":paper["year_published"]
             }
 
             if paper["year_published"]<initial_year:
@@ -189,6 +193,8 @@ class ColavFacultyApp(HunabkuPluginBase):
                 authors.append(au_entry)
             entry["authors"]=authors
             papers.append(entry)
+        if initial_year==9999:
+            initial_year=0
         return {
             "data":papers,
             "count":len(papers),

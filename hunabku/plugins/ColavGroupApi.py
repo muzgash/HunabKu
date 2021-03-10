@@ -143,7 +143,7 @@ class ColavGroupApi(HunabkuPluginBase):
             if inst_id:
                 inst=self.db['institutions'].find_one({"_id":inst_id})
                 if inst:
-                    entry["institution"]=[{"name":inst["name"],"id":inst_id}]#,"logo":inst["logo"]}]
+                    entry["institution"]=[{"name":inst["name"],"id":inst_id,"logo":""}]
 
             for author in self.db['authors'].find({"branches.id":group["_id"]}):
                 author_entry={
