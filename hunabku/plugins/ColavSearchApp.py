@@ -80,6 +80,8 @@ class ColavSearchApp(HunabkuPluginBase):
             cursor=self.db['authors'].find()
             affiliations=[]
             for reg in self.db['authors'].find({},{"affiliations":{"$slice":-1}}):
+                if not "affiliations" in reg.keys():
+                    continue
                 if len(reg["affiliations"])==0:
                     continue
                 if not reg["affiliations"][0] in affiliations:
