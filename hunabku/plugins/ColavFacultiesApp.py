@@ -2,28 +2,28 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 
-class ColavGroupApp(HunabkuPluginBase):
+class ColavFacultiesApp(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
     def get_info(self,idx):
         self.db = self.dbclient["antioquia"]
-        group = self.db['branches'].find_one({"type":"group","_id":ObjectId(idx)})
-        if group:
-            entry={"id":group["_id"],
-                "name":group["name"],
-                "type":group["type"],
+        faculty = self.db['branches'].find_one({"type":"faculty","_id":ObjectId(idx)})
+        if faculty:
+            entry={"id":faculty["_id"],
+                "name":faculty["name"],
+                "type":faculty["type"],
                 "abbreviations":"",
-                "external_urls":group["external_urls"],
+                "external_urls":faculty["external_urls"],
                 "departments":[],
                 "groups":[],
                 "authors":[],
                 "institution":[]
             }
-            if len(group["abbreviations"])>0:
-                entry["abbreviations"]=group["abbreviations"][0]
+            if len(faculty["abbreviations"])>0:
+                entry["abbreviations"]=faculty["abbreviations"][0]
             inst_id=""
-            for rel in group["relations"]:
+            for rel in faculty["relations"]:
                 if rel["type"]=="university":
                     inst_id=rel["id"]
                     break
@@ -32,12 +32,35 @@ class ColavGroupApp(HunabkuPluginBase):
                 if inst:
                     entry["institution"]=[{"name":inst["name"],"id":inst_id,"logo":""}]
 
-            for author in self.db['authors'].find({"branches.id":group["_id"]}):
+            for dep in self.db['branches'].find({"type":"department","relations.id":faculty["_id"]}):
+                dep_entry={
+                    "name":dep["name"],
+                    "id":str(dep["_id"])
+                }
+                entry["departments"].append(dep_entry)
+            for author in self.db['authors'].find({"branches.id":faculty["_id"]}):
                 author_entry={
                     "full_name":author["full_name"],
                     "id":str(author["_id"])
                 }
                 entry["authors"].append(author_entry)
+                for branch in author["branches"]:
+                    if branch["type"]=="group" and branch["id"]:
+                        branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
+                        entry_group={
+                            "id":branch["id"],
+                            "name":branch_db["name"]
+                        }
+                        if not entry_group in entry["groups"]:
+                            entry["groups"].append(entry_group)
+                    if branch["type"]=="department":
+                        branch_db=self.db["branches"].find_one({"_id":ObjectId(branch["id"])})
+                        entry_department={
+                            "id":branch["id"],
+                            "name":branch_db["name"]
+                        }
+                        if not entry_department in entry["departments"]:
+                            entry["departments"].append(entry_department)
             return entry
         else:
             return None
@@ -123,7 +146,7 @@ class ColavGroupApp(HunabkuPluginBase):
 
         for paper in cursor:
             entry={
-                "id":paper["_id"],
+                "_id":paper["_id"],
                 "title":paper["titles"][0]["title"],
                 "citations_count":paper["citations_count"],
                 "year_published":paper["year_published"]
@@ -185,17 +208,17 @@ class ColavGroupApp(HunabkuPluginBase):
                 }
             }
 
-    @endpoint('/app/group', methods=['GET'])
-    def app_group(self):
+    @endpoint('/app/faculties', methods=['GET'])
+    def app_faculies(self):
         """
-        @api {get} /app/group Group
+        @api {get} /app/faculties Faculties
         @apiName app
         @apiGroup CoLav app
-        @apiDescription Responds with information about the group
+        @apiDescription Responds with information about a faculty
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production
-        @apiParam {Object} id The mongodb id of the group requested
+        @apiParam {Object} id The mongodb id of the faculty requested
         @apiParam {Int} start_year Retrieves result starting on this year
         @apiParam {Int} end_year Retrieves results up to this year
         @apiParam {Int} max Maximum results per page
@@ -250,52 +273,101 @@ class ColavGroupApp(HunabkuPluginBase):
                     "id": "60120afa4749273de6161883"
                     }
                 ]
-                }
+            }
         @apiSuccessExample {json} Success-Response (data=production):
             HTTP/1.1 200 OK
             {
                 "data": [
                     {
-                    "_id": "602ef9dd728ecc2d8e62e030",
-                    "title": "Comments on the Riemann conjecture and index theory on Cantorian fractal space-time",
+                    "_id": "602ef78d728ecc2d8e62d507",
+                    "title": "CrVN/TiN nanoscale multilayer coatings deposited by DC unbalanced magnetron sputtering",
                     "source": {
-                        "name": "Chaos Solitons & Fractals",
-                        "_id": "602ef9dd728ecc2d8e62e02d"
+                        "name": "Surface & Coatings Technology",
+                        "_id": "602ef78d728ecc2d8e62d503"
                     },
                     "authors": [
                         {
-                        "full_name": "Carlos Castro",
-                        "_id": "602ef9dd728ecc2d8e62e02f",
+                        "full_name": "E. Contreras",
+                        "_id": "602ef78d728ecc2d8e62d504",
                         "affiliations": [
                             {
-                            "name": "Center for Theoretical Studies, University of Miami",
-                            "_id": "602ef9dd728ecc2d8e62e02e",
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
                             "branches": []
                             }
                         ]
                         },
                         {
-                        "full_name": "Jorge Eduardo Mahecha Gomez",
-                        "_id": "5fc65863b246cc0887190a9f",
+                        "full_name": "Y. Galindez",
+                        "_id": "602ef78d728ecc2d8e62d505",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": []
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "M.A. Rodas",
+                        "_id": "602ef78d728ecc2d8e62d506",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": []
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Gilberto Bejarano Gaitan",
+                        "_id": "5fca32c2eccc163512fee4e1",
                         "affiliations": [
                             {
                             "name": "University of Antioquia",
                             "_id": "60120afa4749273de6161883",
                             "branches": [
                                 {
-                                "name": "Facultad de ciencias exactas y naturales",
+                                "name": "Facultad de ingeniería",
                                 "type": "faculty",
-                                "_id": "602c50d1fd74967db0663833"
+                                "_id": "602c50d1fd74967db066383a"
                                 },
                                 {
-                                "name": "Instituto de física",
+                                "name": "Departamento de ingeniería metalúrgica",
                                 "type": "department",
-                                "_id": "602c50f9fd74967db0663859"
+                                "_id": "602c50f9fd74967db0663884"
                                 },
                                 {
-                                "name": "Grupo de física atómica y molecular",
+                                "name": "Centro de investigación, innovación y desarrollo de materiales",
                                 "type": "group",
-                                "_id": "602c510ffd74967db06638fb"
+                                "_id": "602c510ffd74967db06638dc"
+                                }
+                            ]
+                            }
+                        ]
+                        },
+                        {
+                        "full_name": "Maryory Astrid Gomez Botero",
+                        "_id": "5fca3dcfeccc163512fee4e2",
+                        "affiliations": [
+                            {
+                            "name": "University of Antioquia",
+                            "_id": "60120afa4749273de6161883",
+                            "branches": [
+                                {
+                                "name": "Facultad de ingeniería",
+                                "type": "faculty",
+                                "_id": "602c50d1fd74967db066383a"
+                                },
+                                {
+                                "name": "Departamento de ingeniería metalúrgica",
+                                "type": "department",
+                                "_id": "602c50f9fd74967db0663884"
+                                },
+                                {
+                                "name": "Centro de investigación, innovación y desarrollo de materiales",
+                                "type": "group",
+                                "_id": "602c510ffd74967db06638dc"
                                 }
                             ]
                             }
@@ -304,17 +376,17 @@ class ColavGroupApp(HunabkuPluginBase):
                     ]
                     }
                 ],
-                "count": 3,
+                "count": 82,
                 "page": 1,
-                "total_results": 3,
-                "initial_year": 2002,
-                "final_year": 2014,
+                "total_results": 82,
+                "initial_year": 2000,
+                "final_year": 2020,
                 "open_access": {
-                    "green": 2,
-                    "gold": 0,
+                    "green": 7,
+                    "gold": 24,
                     "bronze": 1,
-                    "closed": 0,
-                    "hybrid": 0
+                    "closed": 49,
+                    "hybrid": 1
                 },
                 "venn_source": {
                     "scholar": 0,
@@ -322,7 +394,10 @@ class ColavGroupApp(HunabkuPluginBase):
                     "oadoi": 0,
                     "wos": 0,
                     "scopus": 0,
-                    "lens_wos_scholar_scopus": 3
+                    "lens_scholar_scopus": 26,
+                    "lens_scholar": 9,
+                    "lens_wos_scholar_scopus": 44,
+                    "lens_wos_scholar": 3
                 }
                 }
         """

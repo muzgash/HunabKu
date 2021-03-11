@@ -2,7 +2,7 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 
-class ColavGroupApi(HunabkuPluginBase):
+class ColavGroupsApi(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
@@ -156,13 +156,13 @@ class ColavGroupApi(HunabkuPluginBase):
         else:
             return None
 
-    @endpoint('/api/group', methods=['GET'])
-    def api_group(self):
+    @endpoint('/api/groups', methods=['GET'])
+    def api_groups(self):
         """
-        @api {get} /api/group Group
+        @api {get} /api/groups Groups
         @apiName api
         @apiGroup CoLav api
-        @apiDescription Responds with information about the group
+        @apiDescription Responds with information about a group
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production

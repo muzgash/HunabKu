@@ -2,7 +2,7 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 
-class ColavFacultyApi(HunabkuPluginBase):
+class ColavFacultiesApi(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
@@ -172,13 +172,13 @@ class ColavFacultyApi(HunabkuPluginBase):
         else:
             return None
 
-    @endpoint('/api/faculty', methods=['GET'])
+    @endpoint('/api/faculties', methods=['GET'])
     def api_faculty(self):
         """
-        @api {get} /api/faculty Faculty
+        @api {get} /api/faculties Faculties
         @apiName api
         @apiGroup CoLav api
-        @apiDescription Responds with information about the faculty
+        @apiDescription Responds with information about a faculty
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production

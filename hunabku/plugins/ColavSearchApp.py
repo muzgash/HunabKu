@@ -161,7 +161,7 @@ class ColavSearchApp(HunabkuPluginBase):
         @apiError (Error 204) msg  The HTTP 204 No Content.
         @apiError (Error 200) msg  The HTTP 200 OK.
 
-        @apiSuccessExample {json} Success-Response (data=faculty):
+        @apiSuccessExample {json} Success-Response (data=faculties):
         [
             {
                 "name": "Facultad de artes",
@@ -213,7 +213,7 @@ class ColavSearchApp(HunabkuPluginBase):
             }
         ]
 
-        @apiSuccessExample {json} Success-Response (data=author):
+        @apiSuccessExample {json} Success-Response (data=authors):
             {
                 "data": [
                     {
@@ -276,25 +276,25 @@ class ColavSearchApp(HunabkuPluginBase):
         data = self.request.args.get('data')
         if not self.valid_apikey():
             return self.apikey_error()
-        if data=="faculty":
+        if data=="faculties":
             if "affiliation" in self.request.args:
                 iid = self.request.args.get('affiliation')
                 result=self.search_branch("faculty",iid)
             else:
                 result=self.search_branch("faculty")
-        elif data=="department":
+        elif data=="departments":
             if "affiliation" in self.request.args:
                 iid = self.request.args.get('affiliation')
                 result=self.search_branch("department",iid)
             else:
                 result=self.search_branch("department")
-        elif data=="group":
+        elif data=="groups":
             if "affiliation" in self.request.args:
                 iid = self.request.args.get('affiliation')
                 result=self.search_branch("group",iid)
             else:
                 result=self.search_branch("group")
-        elif data=="author":
+        elif data=="authors":
             max_results=self.request.args.get('max') if 'max' in self.request.args else 100
             page=self.request.args.get('page') if 'page' in self.request.args else 1
             iid = self.request.args.get('affiliation') if "affiliation" in self.request.args else None

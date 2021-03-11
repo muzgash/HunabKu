@@ -2,7 +2,7 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 
-class ColavDepartmentApp(HunabkuPluginBase):
+class ColavDepartmentsApp(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
@@ -208,13 +208,13 @@ class ColavDepartmentApp(HunabkuPluginBase):
                 }
             }
 
-    @endpoint('/app/department', methods=['GET'])
+    @endpoint('/app/departments', methods=['GET'])
     def app_department(self):
         """
-        @api {get} /app/department Department
+        @api {get} /app/departments Departments
         @apiName app
         @apiGroup CoLav app
-        @apiDescription Responds with information about the department
+        @apiDescription Responds with information about a department
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production

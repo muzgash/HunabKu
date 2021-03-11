@@ -2,7 +2,7 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 
-class ColavAuthorApi(HunabkuPluginBase):
+class ColavAuthorsApi(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
@@ -106,7 +106,7 @@ class ColavAuthorApi(HunabkuPluginBase):
                 "faculty":{},
                 "department":{},
                 "group":{},
-                "external_ids":[],
+                "external_urls":[],
             }
             if entry["institution"]:
                 inst_db=self.db["institutions"].find_one({"_id":ObjectId(entry["institution"]["id"])})
@@ -148,13 +148,13 @@ class ColavAuthorApi(HunabkuPluginBase):
         else:
             return None
 
-    @endpoint('/api/author', methods=['GET'])
-    def api_author(self):
+    @endpoint('/api/authors', methods=['GET'])
+    def api_authors(self):
         """
-        @api {get} /api/author Author
+        @api {get} /api/authors Authors
         @apiName api
         @apiGroup CoLav api
-        @apiDescription Responds with information about the author
+        @apiDescription Responds with information about an author
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production
