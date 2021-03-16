@@ -128,10 +128,13 @@ class ColavSearchApp(HunabkuPluginBase):
                 entry={
                     "id":author["_id"],
                     "full_name":author["full_name"],
-                    "affiliation":author["affiliations"][-1] if len(author["affiliations"])>0 else [],
+                    "affiliation":[],
                     "keywords":author["keywords"]
                 }
+                if len(author["affiliations"])>0:
+                    author["affiliations"][-1]
                 author_list.append(entry)
+    
             return {"data":author_list,
                     "filters":{"affiliations":affiliations,
                         "keywords":keywords,
