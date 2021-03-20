@@ -11,16 +11,21 @@ class ColavAuthorsApp(HunabkuPluginBase):
         if author:
             entry={"id":author["_id"],
                 "full_name":author["full_name"],
-                "affiliation":author["affiliations"][-1],
+                "affiliation":[],
                 "country":"",
+                "country_code":"",
                 "faculty":{},
                 "department":{},
                 "group":{},
                 "external_urls":[],
             }
+            if "affiliations" in author.keys():
+                if len(author["affiliations"]):
+                    entry["affiliation"]=author["affiliations"][-1]
             if entry["affiliation"]:
                 inst_db=self.db["institutions"].find_one({"_id":ObjectId(entry["affiliation"]["id"])})
                 if inst_db:
+                    entry["country_code"]=inst_db["addresses"][0]["country_code"]
                     entry["country"]=inst_db["addresses"][0]["country"]
             sources=[]
             for ext in author["external_ids"]:

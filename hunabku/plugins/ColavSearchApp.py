@@ -86,6 +86,7 @@ class ColavSearchApp(HunabkuPluginBase):
                     continue
                 if not reg["affiliations"][0] in affiliations:
                      affiliations.append(reg["affiliations"][0])
+            countries=[]
             pipeline=[
                 {"$lookup":{
                     "from":"institutions",
@@ -96,7 +97,6 @@ class ColavSearchApp(HunabkuPluginBase):
                 {"$project":{"affiliations.addresses.country_code":1,"_id":0}},
                 {"$unwind":"$affiliations"}
             ]
-            countries=[]
             for reg in self.db["authors"].aggregate(pipeline):
                 country=reg["affiliations"]["addresses"][0]["country_code"]
                 if not country in countries:
