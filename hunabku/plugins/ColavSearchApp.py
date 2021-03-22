@@ -72,7 +72,7 @@ class ColavSearchApp(HunabkuPluginBase):
                 {"$unwind":"$affiliations"}
             ]
             countries=[]
-            for reg in self.db["authors"].aggregate(pipeline):
+            for reg in self.db["authors"].aggregate(pipeline,allowDiskUse=False):
                 country=reg["affiliations"]["addresses"][0]["country_code"]
                 if not country in countries:
                     countries.append(country)
@@ -97,7 +97,7 @@ class ColavSearchApp(HunabkuPluginBase):
                 {"$project":{"affiliations.addresses.country_code":1,"_id":0}},
                 {"$unwind":"$affiliations"}
             ]
-            for reg in self.db["authors"].aggregate(pipeline):
+            for reg in self.db["authors"].aggregate(pipeline,allowDiskUse=False):
                 country=reg["affiliations"]["addresses"][0]["country_code"]
                 if not country in countries:
                     countries.append(country)
@@ -142,6 +142,60 @@ class ColavSearchApp(HunabkuPluginBase):
                         "countries":countries
                     },
                     "count":len(author_list),
+                    "page":page,
+                    "total_results":total
+                }
+        else:
+            return None
+
+    def search_institution(self,name="",keywords=[],country="",max_results=100,page=1):
+        """
+        TODO:
+            Code already with pagination, missing the queries that make use of them
+            namely keyword and country, here in this function as well as in the endpoint function
+        """
+        self.db = self.dbclient["antioquia"]
+        if name:
+            cursor=self.db['institutions'].find({"$text":{"$search":name}})
+            countries=list(self.db["institutions"].distinct("addresses.country_code",{"$text":{"$search":name}}))
+        else:
+            cursor=self.db['institutions'].find()
+            countries=list(self.db["institutions"].distinct("addresses.country_code"))
+
+        total=cursor.count()
+        if not page:
+            page=1
+        else:
+            try:
+                page=int(page)
+            except:
+                print("Could not convert end page to int")
+                return None
+        if not max_results:
+            max_results=100
+        else:
+            try:
+                max_results=int(max_results)
+            except:
+                print("Could not convert end max to int")
+                return None
+        cursor=cursor.skip(max_results*(page-1)).limit(max_results)
+
+        if cursor:
+            institution_list=[]
+            for institution in cursor:
+                entry={
+                    "id":institution["_id"],
+                    "name":institution["name"],
+                    "logo":""
+                }
+                institution_list.append(entry)
+    
+            return {"data":institution_list,
+                    "filters":{"keywords":[],
+                        "countries":countries
+                    },
+                    "count":len(institution_list),
                     "page":page,
                     "total_results":total
                 }
@@ -304,6 +358,11 @@ class ColavSearchApp(HunabkuPluginBase):
             iid = self.request.args.get('affiliation') if "affiliation" in self.request.args else None
                 
             result=self.search_author(iid,max_results,page)
+        elif data=="institutions":
+            max_results=self.request.args.get('max') if 'max' in self.request.args else 100
+            page=self.request.args.get('page') if 'page' in self.request.args else 1
+            name = self.request.args.get('name') if "name" in self.request.args else ""
+            result=self.search_institution(name=name,max_results=max_results,page=page)
         else:
             result=None
         if result:

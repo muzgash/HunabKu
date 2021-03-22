@@ -1,63 +1,37 @@
 from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 
-class ColavAuthorsApp(HunabkuPluginBase):
+class ColavInstitutionsApp(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
     def get_info(self,idx):
         self.db = self.dbclient["antioquia"]
-        author = self.db['authors'].find_one({"_id":ObjectId(idx)})
-        if author:
-            entry={"id":author["_id"],
-                "full_name":author["full_name"],
-                "affiliation":[],
-                "country":"",
-                "country_code":"",
-                "faculty":{},
-                "department":{},
-                "group":{},
-                "external_urls":[],
+        institution = self.db['institutions'].find_one({"_id":ObjectId(idx)})
+        if institution:
+            entry={"id":institution["_id"],
+                "name":institution["name"],
+                "external_urls":institution["external_urls"],
+                "departments":[],
+                "faculties":[],
+                "area_groups":[],
+                "logo":""
             }
-            if "affiliations" in author.keys():
-                if len(author["affiliations"]):
-                    entry["affiliation"]=author["affiliations"][-1]
-            if entry["affiliation"]:
-                inst_db=self.db["institutions"].find_one({"_id":ObjectId(entry["affiliation"]["id"])})
-                if inst_db:
-                    entry["country_code"]=inst_db["addresses"][0]["country_code"]
-                    entry["country"]=inst_db["addresses"][0]["country"]
-            sources=[]
-            for ext in author["external_ids"]:
-                if ext["source"]=="researchid" and not "researcherid" in sources:
-                    sources.append("researcherid")
-                    entry["external_urls"].append({
-                        "source":"researcherid",
-                        "url":"https://publons.com/researcher/"+ext["value"]})
-                if ext["source"]=="scopus" and not "scopus" in sources:
-                    sources.append("scopus")
-                    entry["external_urls"].append({
-                        "source":"scopus",
-                        "url":"https://www.scopus.com/authid/detail.uri?authorId="+ext["value"]})
-                if ext["source"]=="scholar" and not "scholar" in sources:
-                    sources.append("scholar")
-                    entry["external_urls"].append({
-                        "source":"scholar",
-                        "url":"https://scholar.google.com.co/citations?user="+ext["value"]})
-                if ext["source"]=="orcid" and not "orcid" in sources:
-                    sources.append("orcid")
-                    entry["external_urls"].append({
-                        "source":"orcid",
-                        "url":"https://orcid.org/"+ext["value"]})
 
-            for branch in author["branches"]:
-                if branch["type"]=="faculty":
-                    entry["faculty"]=branch
-                elif branch["type"]=="department":
-                    entry["department"]=branch
-                elif branch["type"]=="group":
-                    entry["group"]=branch
-
+            for dep in self.db['branches'].find({"type":"department","relations.id":ObjectId(idx)}):
+                dep_entry={
+                    "name":dep["name"],
+                    "id":str(dep["_id"])
+                }
+                entry["departments"].append(dep_entry)
+            
+            for fac in self.db['branches'].find({"type":"faculty","relations.id":ObjectId(idx)}):
+                fac_entry={
+                    "name":fac["name"],
+                    "id":str(fac["_id"])
+                }
+                entry["faculties"].append(fac_entry)
+            
             return entry
         else:
             return None
@@ -84,33 +58,33 @@ class ColavAuthorsApp(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)})}
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})}
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})}
             else:
-                cursor=self.db['documents'].find({"authors._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)})
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors.affiliations._id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors.affiliations._id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors.affiliations._id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors.affiliations._id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors.affiliations._id":ObjectId(idx)})}
         else:
             cursor=self.db['documents'].find()
         total=cursor.count()
@@ -143,10 +117,8 @@ class ColavAuthorsApp(HunabkuPluginBase):
 
         for paper in cursor:
             entry={
-                "id":paper["_id"],
+                "_id":paper["_id"],
                 "title":paper["titles"][0]["title"],
-                "citations_count":paper["citations_count"],
-                "year_published":paper["year_published"]
             }
 
             if paper["year_published"]<initial_year:
@@ -190,8 +162,6 @@ class ColavAuthorsApp(HunabkuPluginBase):
                 authors.append(au_entry)
             entry["authors"]=authors
             papers.append(entry)
-        if initial_year==9999:
-            initial_year=0
         return {
             "data":papers,
             "count":len(papers),
@@ -202,17 +172,17 @@ class ColavAuthorsApp(HunabkuPluginBase):
             "open_access":open_access,
             "venn_source":venn_source}
 
-    @endpoint('/app/authors', methods=['GET'])
-    def app_authors(self):
+    @endpoint('/app/institutions', methods=['GET'])
+    def app_institutions(self):
         """
-        @api {get} /app/authors Authors
+        @api {get} /app/institutions Institutions
         @apiName app
         @apiGroup CoLav app
-        @apiDescription Responds with information about an author
+        @apiDescription Responds with information about the institutions
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production
-        @apiParam {Object} id The mongodb id of the author requested
+        @apiParam {Object} id The mongodb id of the institution requested
         @apiParam {Int} start_year Retrieves result starting on this year
         @apiParam {Int} end_year Retrieves results up to this year
         @apiParam {Int} max Maximum results per page
@@ -225,43 +195,180 @@ class ColavAuthorsApp(HunabkuPluginBase):
 
         @apiSuccessExample {json} Success-Response (data=info):
         {
-            "id": "5fc66fdfb246cc0887190aa6",
-            "full_name": "Diego Alejandro Restrepo Quintero",
-            "affiliation": {
-                "id": "60120afa4749273de6161883",
-                "name": "University of Antioquia"
-            },
-            "country": "Colombia",
-            "country_code": "CO",
-            "faculty": {
-                "name": "Facultad de Ciencias Exactas y Naturales",
-                "type": "faculty",
-                "id": "602c50d1fd74967db0663833"
-            },
-            "department": {
-                "name": "Instituto de Física",
-                "type": "department",
-                "id": "602c50f9fd74967db0663859"
-            },
-            "group": {
-                "name": "Grupo de Fenomenologia de Interacciones Fundamentales",
-                "type": "group",
-                "id": "602c510ffd74967db06638f9"
-            },
+            "id": "60120afa4749273de6161883",
+            "name": "University of Antioquia",
             "external_urls": [
                 {
-                "source": "scopus",
-                "url": "https://www.scopus.com/authid/detail.uri?authorId=7005721136"
+                "source": "wikipedia",
+                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
                 },
                 {
-                "source": "orcid",
-                "url": "https://orcid.org/0000-0001-6455-5564"
-                },
-                {
-                "source": "researcherid",
-                "url": "https://publons.com/researcher/E-6977-2013"
+                "source": "site",
+                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
                 }
-            ]
+            ],
+            "departments": [
+                {
+                "name": "Departamento de artes visuales",
+                "id": "602c50f9fd74967db0663854"
+                },
+                {
+                "name": "Departamento de música",
+                "id": "602c50f9fd74967db0663855"
+                },
+                {
+                "name": "Departamento de teatro",
+                "id": "602c50f9fd74967db0663856"
+                },
+                {
+                "name": "Decanatura facultad de artes",
+                "id": "602c50f9fd74967db0663857"
+                },
+                {
+                "name": "Instituto de matemáticas",
+                "id": "602c50f9fd74967db0663858"
+                },
+                {
+                "name": "Instituto de física",
+                "id": "602c50f9fd74967db0663859"
+                },
+                {
+                "name": "Instituto de biología",
+                "id": "602c50f9fd74967db066385a"
+                },
+                {
+                "name": "Instituto de química",
+                "id": "602c50f9fd74967db066385b"
+                },
+                {
+                "name": "Departamento de bioquímica",
+                "id": "602c50f9fd74967db0663891"
+                },
+                {
+                "name": "Departamento de farmacología y toxicología",
+                "id": "602c50f9fd74967db0663892"
+                },
+                {
+                "name": "Departamento de patología",
+                "id": "602c50f9fd74967db0663893"
+                },
+                {
+                "name": "Departamento de microbiología y parasitología",
+                "id": "602c50f9fd74967db0663894"
+                },
+                {
+                "name": "Departamento de medicina interna",
+                "id": "602c50f9fd74967db0663895"
+                },
+                {
+                "name": "Departamento de cirugía",
+                "id": "602c50f9fd74967db0663896"
+                }
+            ],
+            "faculties": [
+                {
+                "name": "Facultad de artes",
+                "id": "602c50d1fd74967db0663830"
+                },
+                {
+                "name": "Facultad de ciencias agrarias",
+                "id": "602c50d1fd74967db0663831"
+                },
+                {
+                "name": "Facultad de ciencias económicas",
+                "id": "602c50d1fd74967db0663832"
+                },
+                {
+                "name": "Facultad de ciencias exactas y naturales",
+                "id": "602c50d1fd74967db0663833"
+                },
+                {
+                "name": "Facultad de ciencias farmacéuticas y alimentarias",
+                "id": "602c50d1fd74967db0663834"
+                },
+                {
+                "name": "Facultad de ciencias sociales y humanas",
+                "id": "602c50d1fd74967db0663835"
+                },
+                {
+                "name": "Facultad de comunicaciones y filología",
+                "id": "602c50d1fd74967db0663836"
+                },
+                {
+                "name": "Facultad de derecho y ciencias políticas",
+                "id": "602c50d1fd74967db0663837"
+                },
+                {
+                "name": "Facultad de educación",
+                "id": "602c50d1fd74967db0663838"
+                },
+                {
+                "name": "Facultad de enfermería",
+                "id": "602c50d1fd74967db0663839"
+                },
+                {
+                "name": "Facultad de ingeniería",
+                "id": "602c50d1fd74967db066383a"
+                },
+                {
+                "name": "Facultad de medicina",
+                "id": "602c50d1fd74967db066383b"
+                },
+                {
+                "name": "Facultad de odontología",
+                "id": "602c50d1fd74967db066383c"
+                },
+                {
+                "name": "Facultad de salud pública",
+                "id": "602c50d1fd74967db066383d"
+                },
+                {
+                "name": "Escuela de idiomas",
+                "id": "602c50d1fd74967db066383e"
+                },
+                {
+                "name": "Escuela interamericana de bibliotecología",
+                "id": "602c50d1fd74967db066383f"
+                },
+                {
+                "name": "Escuela de microbiología",
+                "id": "602c50d1fd74967db0663840"
+                },
+                {
+                "name": "Escuela de nutrición y dietética",
+                "id": "602c50d1fd74967db0663841"
+                },
+                {
+                "name": "Instituto de filosofía",
+                "id": "602c50d1fd74967db0663842"
+                },
+                {
+                "name": "Instituto universitario de educación física y deporte",
+                "id": "602c50d1fd74967db0663843"
+                },
+                {
+                "name": "Instituto de estudios políticos",
+                "id": "602c50d1fd74967db0663844"
+                },
+                {
+                "name": "Instituto de estudios regionales",
+                "id": "602c50d1fd74967db0663845"
+                },
+                {
+                "name": "Corporación académica ambiental",
+                "id": "602c50d1fd74967db0663846"
+                },
+                {
+                "name": "Corporación académica ciencias básicas biomédicas",
+                "id": "602c50d1fd74967db0663847"
+                },
+                {
+                "name": "Corporación académica para el estudio de patologías tropicales",
+                "id": "602c50d1fd74967db0663848"
+                }
+            ],
+            "area_groups": [],
+            "logo": ""
         }
         @apiSuccessExample {json} Success-Response (data=production):
             {

@@ -2,12 +2,12 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 
-class ColavAuthorsApi(HunabkuPluginBase):
+class ColavInstitutionsApi(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
     
-    def get_production(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
+    def get_papers(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
         self.db = self.dbclient["antioquia"]
         papers=[]
         total=0
@@ -25,13 +25,13 @@ class ColavAuthorsApi(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)})
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.._id":ObjectId(idx)})
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})
             else:
-                cursor=self.db['documents'].find({"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)})
         else:
             cursor=self.db['documents'].find()
 
@@ -97,68 +97,46 @@ class ColavAuthorsApi(HunabkuPluginBase):
     
     def get_info(self,idx):
         self.db = self.dbclient["antioquia"]
-        author = self.db['authors'].find_one({"_id":ObjectId(idx)})
-        if author:
-            entry={"id":author["_id"],
-                "full_name":author["full_name"],
-                "institution":author["affiliations"][-1],
-                "country":"",
-                "faculty":{},
-                "department":{},
-                "group":{},
-                "external_urls":[],
+        institution = self.db['institutions'].find_one({"_id":ObjectId(idx)})
+        if institution:
+            entry={"id":institution["_id"],
+                "name":institution["name"],
+                "external_urls":institution["external_urls"],
+                "departments":[],
+                "faculties":[],
+                "area_groups":[],
+                "logo":""
             }
-            if entry["institution"]:
-                inst_db=self.db["institutions"].find_one({"_id":ObjectId(entry["institution"]["id"])})
-                if inst_db:
-                    entry["country"]=inst_db["addresses"][0]["country"]
 
-            sources=[]
-            for ext in author["external_ids"]:
-                if ext["source"]=="researchid" and not "researcherid" in sources:
-                    sources.append("researcherid")
-                    entry["external_urls"].append({
-                        "source":"researcherid",
-                        "url":"https://publons.com/researcher/"+ext["value"]})
-                if ext["source"]=="scopus" and not "scopus" in sources:
-                    sources.append("scopus")
-                    entry["external_urls"].append({
-                        "source":"scopus",
-                        "url":"https://www.scopus.com/authid/detail.uri?authorId="+ext["value"]})
-                if ext["source"]=="scholar" and not "scholar" in sources:
-                    sources.append("scholar")
-                    entry["external_urls"].append({
-                        "source":"scholar",
-                        "url":"https://scholar.google.com.co/citations?user="+ext["value"]})
-                if ext["source"]=="orcid" and not "orcid" in sources:
-                    sources.append("orcid")
-                    entry["external_urls"].append({
-                        "source":"orcid",
-                        "url":"https://orcid.org/"+ext["value"]})
-
-            for branch in author["branches"]:
-                if branch["type"]=="faculty":
-                    entry["faculty"]=branch
-                elif branch["type"]=="department":
-                    entry["department"]=branch
-                elif branch["type"]=="group":
-                    entry["group"]=branch
-
+            for dep in self.db['branches'].find({"type":"department","relations.id":ObjectId(idx)}):
+                dep_entry={
+                    "name":dep["name"],
+                    "id":str(dep["_id"])
+                }
+                entry["departments"].append(dep_entry)
+            
+            for fac in self.db['branches'].find({"type":"faculty","relations.id":ObjectId(idx)}):
+                fac_entry={
+                    "name":fac["name"],
+                    "id":str(fac["_id"])
+                }
+                entry["faculties"].append(fac_entry)
+            
             return entry
         else:
             return None
 
-    @endpoint('/api/authors', methods=['GET'])
-    def api_authors(self):
+    @endpoint('/api/institution', methods=['GET'])
+    def api_institution(self):
         """
-        @api {get} /api/authors Authors
+        @api {get} /api/institution Institution
         @apiName api
         @apiGroup CoLav api
-        @apiDescription Responds with information about an author
+        @apiDescription Responds with information about the institution
 
         @apiParam {String} apikey Credential for authentication
         @apiParam {String} data (info,production) Whether is the general information or the production
-        @apiParam {Object} id The mongodb id of the author requested
+        @apiParam {Object} id The mongodb id of the institution requested
         @apiParam {Int} start_year Retrieves result starting on this year
         @apiParam {Int} end_year Retrieves results up to this year
         @apiParam {Int} max Maximum results per page
@@ -170,45 +148,50 @@ class ColavAuthorsApi(HunabkuPluginBase):
         @apiError (Error 200) msg  The HTTP 200 OK.
 
         @apiSuccessExample {json} Success-Response (data=info):
-        {
-            "id": "5fc66fdfb246cc0887190aa6",
-            "full_name": "Diego Alejandro Restrepo Quintero",
-            "affiliation": {
-                "id": "60120afa4749273de6161883",
-                "name": "University of Antioquia"
-            },
-            "country": "Colombia",
-            "country_code": "CO",
-            "faculty": {
-                "name": "Facultad de Ciencias Exactas y Naturales",
+            HTTP/1.1 200 OK
+            {
+                "id": "602c50d1fd74967db0663833",
+                "name": "Facultad de ciencias exactas y naturales",
                 "type": "faculty",
-                "id": "602c50d1fd74967db0663833"
-            },
-            "department": {
-                "name": "Instituto de Física",
-                "type": "department",
-                "id": "602c50f9fd74967db0663859"
-            },
-            "group": {
-                "name": "Grupo de Fenomenologia de Interacciones Fundamentales",
-                "type": "group",
-                "id": "602c510ffd74967db06638f9"
-            },
-            "external_urls": [
-                {
-                "source": "scopus",
-                "url": "https://www.scopus.com/authid/detail.uri?authorId=7005721136"
-                },
-                {
-                "source": "orcid",
-                "url": "https://orcid.org/0000-0001-6455-5564"
-                },
-                {
-                "source": "researcherid",
-                "url": "https://publons.com/researcher/E-6977-2013"
+                "external_urls": [
+                    {
+                    "source": "website",
+                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
+                    }
+                ],
+                "departments": [
+                    {
+                    "id": "602c50f9fd74967db0663858",
+                    "name": "Instituto de matemáticas"
+                    }
+                ],
+                "groups": [
+                    {
+                    "id": "602c510ffd74967db06639a7",
+                    "name": "Modelación con ecuaciones diferenciales"
+                    },
+                    {
+                    "id": "602c510ffd74967db06639ad",
+                    "name": "álgebra u de a"
+                    }
+                ],
+                "authors": [
+                    {
+                    "full_name": "Roberto Cruz Rodes",
+                    "id": "5fc5a419b246cc0887190a64"
+                    },
+                    {
+                    "full_name": "Jairo Eloy Castellanos Ramos",
+                    "id": "5fc5a4b7b246cc0887190a65"
+                    }
+                ],
+                "institution": [
+                    {
+                    "name": "University of Antioquia",
+                    "id": "60120afa4749273de6161883"
+                    }
+                ]
                 }
-            ]
-        }
         @apiSuccessExample {json} Success-Response (data=production):
         [
             {
@@ -880,14 +863,14 @@ class ColavAuthorsApi(HunabkuPluginBase):
                 status=204,
                 mimetype='application/json'
             )
-        elif data=="production":
+        elif data=="papers":
             idx = self.request.args.get('id')
             max_results=self.request.args.get('max')
             page=self.request.args.get('page')
             start_year=self.request.args.get('start_year')
             end_year=self.request.args.get('end_year')
             sort=self.request.args.get('sort')
-            papers=self.get_production(idx,max_results,page,start_year,end_year,sort,"ascending")
+            papers=self.get_papers(idx,max_results,page,start_year,end_year,sort,"ascending")
             if papers:
                 response = self.app.response_class(
                 response=self.json.dumps(papers),
