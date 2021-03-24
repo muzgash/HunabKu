@@ -21,13 +21,15 @@ class ColavSearchApp(HunabkuPluginBase):
                     "name":entity["name"],
                     "id":str(entity["_id"]),
                     "abbreviations":entity["abbreviations"],
-                    "external_urls":entity["external_urls"]
+                    "external_urls":entity["external_urls"],
+                    "affiliation":{}
                 }
                 entity_list.append(entry)
                 if not entity["addresses"][0]["country_code"] in countries:
                     countries.append(entity["addresses"][0]["country_code"])
                 for relation in entity["relations"]:
                     if relation["type"]=="university":
+                        entry["affiliation"]=relation
                         del(relation["type"])
                         del(relation["collection"])
                         if not relation in affiliations:
@@ -148,16 +150,16 @@ class ColavSearchApp(HunabkuPluginBase):
         else:
             return None
 
-    def search_institution(self,name="",keywords=[],country="",max_results=100,page=1):
+    def search_institution(self,keywords="",country="",max_results=100,page=1):
         """
         TODO:
             Code already with pagination, missing the queries that make use of them
             namely keyword and country, here in this function as well as in the endpoint function
         """
         self.db = self.dbclient["antioquia"]
-        if name:
-            cursor=self.db['institutions'].find({"$text":{"$search":name}})
-            countries=list(self.db["institutions"].distinct("addresses.country_code",{"$text":{"$search":name}}))
+        if keywords:
+            cursor=self.db['institutions'].find({"$text":{"$search":keywords}})
+            countries=list(self.db["institutions"].distinct("addresses.country_code",{"$text":{"$search":keywords}}))
         else:
             cursor=self.db['institutions'].find()
             countries=list(self.db["institutions"].distinct("addresses.country_code"))
@@ -361,8 +363,9 @@ class ColavSearchApp(HunabkuPluginBase):
         elif data=="institutions":
             max_results=self.request.args.get('max') if 'max' in self.request.args else 100
             page=self.request.args.get('page') if 'page' in self.request.args else 1
-            name = self.request.args.get('name') if "name" in self.request.args else ""
-            result=self.search_institution(name=name,max_results=max_results,page=page)
+            keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
+            print(keywords)
+            result=self.search_institution(keywords=keywords,max_results=max_results,page=page)
         else:
             result=None
         if result:

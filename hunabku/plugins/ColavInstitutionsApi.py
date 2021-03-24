@@ -191,7 +191,7 @@ class ColavInstitutionsApi(HunabkuPluginBase):
                     "id": "60120afa4749273de6161883"
                     }
                 ]
-                }
+            }
         @apiSuccessExample {json} Success-Response (data=production):
         [
             {
