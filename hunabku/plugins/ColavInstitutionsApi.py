@@ -105,7 +105,7 @@ class ColavInstitutionsApi(HunabkuPluginBase):
                 "departments":[],
                 "faculties":[],
                 "area_groups":[],
-                "logo":""
+                "logo":institution["logo_url"]
             }
 
             for dep in self.db['branches'].find({"type":"department","relations.id":ObjectId(idx)}):

@@ -189,7 +189,7 @@ class ColavSearchApp(HunabkuPluginBase):
                 entry={
                     "id":institution["_id"],
                     "name":institution["name"],
-                    "logo":""
+                    "logo":institution["logo_url"]
                 }
                 institution_list.append(entry)
     
