@@ -135,7 +135,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
         }
         cites_list=[]
         for idx,reg in enumerate(self.db["documents"].aggregate(pipeline)):
-            entry["citations"]+=sum(reg["citations_year"])
+            entry["citations"]+=sum([num for num in reg["citations_year"] if num!=""])
             entry["yearly_citations"][reg["_id"]]=sum(reg["citations_year"])
             if idx<5:
                 cites_list.extend(reg["citations_year"])
@@ -280,8 +280,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
                 authors.append(au_entry)
             entry["authors"]=authors
             papers.append(entry)
-        if initial_year==9999:
-            initial_year=0
+        
         return {
             "data":papers,
             "count":len(papers),
@@ -487,7 +486,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
                     "lens_wos_scholar": 3
                 }
                 }
-        @apiSuccessExample {json} Success-Response (data=production):
+        @apiSuccessExample {json} Success-Response (data=citations):
             HTTP/1.1 200 OK
             {
                 "data": {
