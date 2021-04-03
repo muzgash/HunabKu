@@ -92,7 +92,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
                 initial_year=list(self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1))[0]["year_published"]
                 final_year=list(self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1))[0]["year_published"]
             elif end_year and not start_year:
-                pipeline:[
+                pipeline=[
                     {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}}
                 ]
                 initial_year=list(self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1))[0]["year_published"]
