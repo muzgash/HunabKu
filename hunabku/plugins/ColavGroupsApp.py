@@ -70,48 +70,58 @@ class ColavGroupsApp(HunabkuPluginBase):
                 ]
                 result=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
             elif end_year and not start_year:
                 pipeline=[
                     {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}}
                 ]
                 result=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort({"year_published":11}).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
             elif start_year and end_year:
                 pipeline=[
                     {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}}
                 ]
                 result=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
             else:
                 pipeline=[
                     {"$match":{"authors.affiliations.branches._id":ObjectId(idx)}}
                 ]
                 result=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
         else:
             pipeline=[]
             result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
-                initial_year=list(result)[0]["year_published"]
+                if len(list(result))>0:
+                    initial_year=list(result)[0]["year_published"]
             result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
             if result:
-                final_year=list(result)[0]["year_published"]
+                if len(list(result))>0:
+                    final_year=list(result)[0]["year_published"]
 
         pipeline.extend([
             {"$project":{
@@ -171,10 +181,12 @@ class ColavGroupsApp(HunabkuPluginBase):
                 cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)})
                 result=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
                 open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)}),
                     "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)}),
                     "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)}),
@@ -184,10 +196,12 @@ class ColavGroupsApp(HunabkuPluginBase):
                 cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
                 result=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort({"year_published":11}).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
                 open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
                     "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
                     "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
@@ -197,10 +211,12 @@ class ColavGroupsApp(HunabkuPluginBase):
                 cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
                 result=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
                 open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
                     "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
                     "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}),
@@ -210,10 +226,12 @@ class ColavGroupsApp(HunabkuPluginBase):
                 cursor=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)})
                 result=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
                 if result:
-                    initial_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        initial_year=list(result)[0]["year_published"]
                 result=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
                 if result:
-                    final_year=list(result)[0]["year_published"]
+                    if len(list(result))>0:
+                        final_year=list(result)[0]["year_published"]
                 open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors.affiliations.branches._id":ObjectId(idx)}),
                     "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors.affiliations.branches._id":ObjectId(idx)}),
                     "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors.affiliations.branches._id":ObjectId(idx)}),
@@ -223,10 +241,12 @@ class ColavGroupsApp(HunabkuPluginBase):
             cursor=self.db['documents'].find()
             result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
-                initial_year=list(result)[0]["year_published"]
+                if len(list(result))>0:
+                    initial_year=list(result)[0]["year_published"]
             result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
             if result:
-                final_year=list(result)[0]["year_published"]
+                if len(list(result))>0:
+                    final_year=list(result)[0]["year_published"]
 
         total=cursor.count()
         if not page:
