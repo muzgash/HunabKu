@@ -145,6 +145,7 @@ class ColavAuthorsApp(HunabkuPluginBase):
             entry={
                 "id":paper["_id"],
                 "title":paper["titles"][0]["title"],
+                "type":"author",
                 "citations_count":paper["citations_count"],
                 "year_published":paper["year_published"]
             }
