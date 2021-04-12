@@ -13,6 +13,7 @@ class ColavAuthorsApp(HunabkuPluginBase):
         if author:
             entry={"id":author["_id"],
                 "full_name":author["full_name"],
+                "type":"author",
                 "affiliation":[],
                 "country":"",
                 "country_code":"",
@@ -270,7 +271,6 @@ class ColavAuthorsApp(HunabkuPluginBase):
             entry={
                 "id":paper["_id"],
                 "title":paper["titles"][0]["title"],
-                "type":"author",
                 "citations_count":paper["citations_count"],
                 "year_published":paper["year_published"]
             }
@@ -323,10 +323,13 @@ class ColavAuthorsApp(HunabkuPluginBase):
             "count":len(papers),
             "page":page,
             "total_results":total,
-            "initial_year":initial_year,
-            "final_year":final_year,
-            "open_access":open_access,
-            "venn_source":venn_source}
+            "venn_source":venn_source,
+            "filters":{
+                "initial_year":initial_year,
+                "final_year":final_year,
+                "open_access":open_access
+            }
+        }
 
     @endpoint('/app/authors', methods=['GET'])
     def app_authors(self):
