@@ -324,10 +324,10 @@ class ColavAuthorsApp(HunabkuPluginBase):
             "page":page,
             "total_results":total,
             "venn_source":venn_source,
+            "open_access":open_access,
             "filters":{
                 "initial_year":initial_year,
-                "final_year":final_year,
-                "open_access":open_access
+                "final_year":final_year
             }
         }
 
