@@ -278,6 +278,8 @@ class ColavFacultiesApp(HunabkuPluginBase):
                     "full_name":reg["full_name"],
                     "count":author["count"]
                 })
+                if not "affiliations" in reg.keys():
+                    continue
                 if reg["affiliations"]:
                     aff=self.db["institutions"].find_one({"_id":reg["affiliations"][0]["id"]})
                     if aff:
