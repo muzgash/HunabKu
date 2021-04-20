@@ -120,6 +120,10 @@ class ColavFacultiesApp(HunabkuPluginBase):
                 cites_pipeline=[
                     {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)}}
                 ]
+            else:
+                cites_pipeline=[
+                    {"$match":{"authors.affiliations.branches._id":ObjectId(idx)}}
+                ]
         else:
             pipeline=[]
             cites_pipeline=[]
@@ -250,6 +254,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
             "institution_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
             "faculties_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))}
         }
+
         author_list=list(self.db["documents"].aggregate(pipeline))
         countries={}
         for author in author_list:

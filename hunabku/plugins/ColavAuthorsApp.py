@@ -119,6 +119,10 @@ class ColavAuthorsApp(HunabkuPluginBase):
                 cites_pipeline=[
                     {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}}
                 ]
+            else:
+                pipeline=[
+                    {"$match":{"authors._id":ObjectId(idx)}}
+                ]
         
         else:
             pipeline=[]
