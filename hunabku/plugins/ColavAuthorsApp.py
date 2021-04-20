@@ -324,7 +324,7 @@ class ColavAuthorsApp(HunabkuPluginBase):
             "open_access":open_access,
             "filters":{
                 "start_year":initial_year,
-                "fend_year":final_year
+                "end_year":final_year
             }
         }
 

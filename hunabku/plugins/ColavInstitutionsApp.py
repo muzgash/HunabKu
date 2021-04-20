@@ -306,7 +306,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             "total_results":total,
             "filters":{
                 "start_year":initial_year,
-                "fend_year":final_year
+                "end_year":final_year
                 }
         }
 
