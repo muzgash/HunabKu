@@ -194,7 +194,8 @@ class ColavSearchApp(HunabkuPluginBase):
                 institution_list.append(entry)
     
             return {"data":institution_list,
-                    "filters":{"keywords":[],
+                    "filters":{
+                        "keywords":[],
                         "countries":countries
                     },
                     "count":len(institution_list),

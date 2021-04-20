@@ -7,7 +7,7 @@ class ColavInstitutionsApi(HunabkuPluginBase):
         super().__init__(hunabku)
 
     
-    def get_papers(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
+    def get_production(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
         self.db = self.dbclient["antioquia"]
         papers=[]
         total=0
@@ -863,17 +863,17 @@ class ColavInstitutionsApi(HunabkuPluginBase):
                 status=204,
                 mimetype='application/json'
             )
-        elif data=="papers":
+        elif data=="production":
             idx = self.request.args.get('id')
             max_results=self.request.args.get('max')
             page=self.request.args.get('page')
             start_year=self.request.args.get('start_year')
             end_year=self.request.args.get('end_year')
             sort=self.request.args.get('sort')
-            papers=self.get_papers(idx,max_results,page,start_year,end_year,sort,"ascending")
-            if papers:
+            production=self.get_production(idx,max_results,page,start_year,end_year,sort,"ascending")
+            if production:
                 response = self.app.response_class(
-                response=self.json.dumps(papers),
+                response=self.json.dumps(production),
                 status=200,
                 mimetype='application/json'
                 )
