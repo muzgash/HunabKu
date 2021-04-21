@@ -278,6 +278,8 @@ class ColavFacultiesApp(HunabkuPluginBase):
                     "full_name":reg["full_name"],
                     "count":author["count"]
                 })
+                
+                #THIS CHECK SHOULD NOT EXISTS, CHECK DB
                 if not "affiliations" in reg.keys():
                     continue
                 if reg["affiliations"]:

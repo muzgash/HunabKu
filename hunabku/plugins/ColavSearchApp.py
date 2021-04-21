@@ -1,58 +1,28 @@
 from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
+from pymongo import ASCENDING,DESCENDING
 
 class ColavSearchApp(HunabkuPluginBase):
     def __init__(self, hunabku):
         super().__init__(hunabku)
 
-    def search_branch(self,branch,iid=None):
-        self.db = self.dbclient["antioquia"]
-        if iid:
-            db_response=self.db['branches'].find({"type":branch,"relations.id":ObjectId(iid)})
-        else:
-            db_response=self.db['branches'].find({"type":branch})
-        if db_response:
-            entity_list=[]
-            keywords=[]
-            countries=[]
-            affiliations=[]
-            for entity in db_response:
-                entry={
-                    "name":entity["name"],
-                    "id":str(entity["_id"]),
-                    "abbreviations":entity["abbreviations"],
-                    "external_urls":entity["external_urls"],
-                    "affiliation":{}
-                }
-                entity_list.append(entry)
-                if not entity["addresses"][0]["country_code"] in countries:
-                    countries.append(entity["addresses"][0]["country_code"])
-                for relation in entity["relations"]:
-                    if relation["type"]=="university":
-                        entry["affiliation"]=relation
-                        del(relation["type"])
-                        del(relation["collection"])
-                        if not relation in affiliations:
-                            affiliations.append(relation)
-                        
-            return {"data":entity_list,
-                    "filters":{"affiliations":affiliations,
-                        "keywords":keywords,
-                        "countries":countries
-                    },
-                    "count":len(entity_list)
-                }
-        else:
-            return None
-
-    def search_author(self,affiliation=None,max_results=100,page=1):
+    def search_author(self,keywords="",affiliation="",country="",max_results=100,page=1):
         """
         TODO:
             Code already with pagination, missing the queries that make use of them
             namely keyword and country, here in this function as well as in the endpoint function
         """
         self.db = self.dbclient["antioquia"]
-        if affiliation:
+
+        if keywords:
+            cursor=self.db['authors'].find({"$text":{"$search":keywords}},{ "score": { "$meta": "textScore" } }).sort([("score", { "$meta": "textScore" } )])
+            pipeline=[{"$match":{"$text":{"$search":keywords}}}]
+        else:
+            cursor=self.db['authors'].find()
+            pipeline=[]
+
+        
+        '''if affiliation:
             cursor=self.db['authors'].find({"affiliations.id":ObjectId(affiliation)})
             affiliations=[]
             for reg in self.db['authors'].find({"affiliations.id":ObjectId(affiliation)},{"affiliations":{"$slice":-1}}):
@@ -70,14 +40,10 @@ class ColavSearchApp(HunabkuPluginBase):
                     "as":"affiliations"
                     }
                 },
-                {"$project":{"affiliations.addresses.country_code":1,"_id":0}},
+                {"$project":{"affiliations.addresses.country_code":1,"affiliations.addresses.country":1,"_id":0}},
                 {"$unwind":"$affiliations"}
             ]
-            countries=[]
-            for reg in self.db["authors"].aggregate(pipeline,allowDiskUse=False):
-                country=reg["affiliations"]["addresses"][0]["country_code"]
-                if not country in countries:
-                    countries.append(country)
+
         else:
             cursor=self.db['authors'].find()
             affiliations=[]
@@ -88,7 +54,6 @@ class ColavSearchApp(HunabkuPluginBase):
                     continue
                 if not reg["affiliations"][0] in affiliations:
                      affiliations.append(reg["affiliations"][0])
-            countries=[]
             pipeline=[
                 {"$lookup":{
                     "from":"institutions",
@@ -96,13 +61,29 @@ class ColavSearchApp(HunabkuPluginBase):
                     "foreignField":"_id",
                     "as":"affiliations"}
                 },
-                {"$project":{"affiliations.addresses.country_code":1,"_id":0}},
+                {"$project":{"affiliations.addresses.country_code":1,"affiliations.addresses.country":1,"_id":0}},
                 {"$unwind":"$affiliations"}
-            ]
-            for reg in self.db["authors"].aggregate(pipeline,allowDiskUse=False):
-                country=reg["affiliations"]["addresses"][0]["country_code"]
-                if not country in countries:
-                    countries.append(country)
+            ]'''
+
+        affiliations=[]
+        countries=[]
+        country_list=[]
+        pipeline.extend([
+            {"$lookup":{
+                "from":"institutions",
+                "localField":"affiliations.id",
+                "foreignField":"_id",
+                "as":"affiliations"
+                }
+            },
+            {"$project":{"affiliations.addresses.country_code":1,"affiliations.addresses.country":1,"_id":0}},
+            {"$unwind":"$affiliations"}
+        ])
+        for reg in self.db["authors"].aggregate(pipeline,allowDiskUse=False):
+            country=reg["affiliations"]["addresses"][0]["country_code"]
+            if not country in country_list:
+                country_list.append(country)
+                countries.append({"country_code":country,"country":reg["affiliations"]["addresses"][0]["country"]})
 
         total=cursor.count()
         if not page:
@@ -139,13 +120,86 @@ class ColavSearchApp(HunabkuPluginBase):
                 author_list.append(entry)
     
             return {"data":author_list,
-                    "filters":{"affiliations":affiliations,
+                    "filters":{
+                        "affiliations":affiliations,
                         "keywords":keywords,
                         "countries":countries
                     },
                     "count":len(author_list),
                     "page":page,
                     "total_results":total
+                }
+        else:
+            return None
+
+    def search_branch(self,branch,keywords="",country="",max_results=100,page=1):
+        self.db = self.dbclient["antioquia"]
+
+        if keywords:
+            cursor=self.db['branches'].find({"$text":{"$search":keywords},"type":branch})
+            pipeline=[{"$match":{"$text":{"$search":keywords},"type":branch}}]
+        else:
+            cursor=self.db['branches'].find({"type":branch})
+            pipeline=[]
+
+        total=cursor.count()
+        if not page:
+            page=1
+        else:
+            try:
+                page=int(page)
+            except:
+                print("Could not convert end page to int")
+                return None
+        if not max_results:
+            max_results=100
+        else:
+            try:
+                max_results=int(max_results)
+            except:
+                print("Could not convert end max to int")
+                return None
+        cursor=cursor.skip(max_results*(page-1)).limit(max_results)
+
+        pipeline.append({"$group":{"_id":{"country_code":"$addresses.country_code","country":"$addresses.country"}}})
+        countries=[]
+        for res in self.db["branches"].aggregate(pipeline):
+            reg=res["_id"]
+            if reg["country_code"] and reg["country"]:
+                print(res)
+                country={"country_code":reg["country_code"][0],"country":reg["country"][0]}
+                if not country in countries:
+                    countries.append(country)
+
+        if cursor:
+            entity_list=[]
+            keywords=[]
+            country_list=[]
+            affiliations=[]
+            for entity in cursor:
+                entry={
+                    "name":entity["name"],
+                    "id":str(entity["_id"]),
+                    "abbreviations":entity["abbreviations"],
+                    "external_urls":entity["external_urls"],
+                    "affiliation":{}
+                }
+                entity_list.append(entry)
+                for relation in entity["relations"]:
+                    if relation["type"]=="university":
+                        entry["affiliation"]=relation
+                        del(relation["type"])
+                        del(relation["collection"])
+                        if not relation in affiliations:
+                            affiliations.append(relation)
+                        
+            return {"data":entity_list,
+                    "filters":{
+                        "affiliations":affiliations,
+                        "keywords":keywords,
+                        "countries":countries
+                    },
+                    "count":len(entity_list)
                 }
         else:
             return None
@@ -159,10 +213,26 @@ class ColavSearchApp(HunabkuPluginBase):
         self.db = self.dbclient["antioquia"]
         if keywords:
             cursor=self.db['institutions'].find({"$text":{"$search":keywords}})
-            countries=list(self.db["institutions"].distinct("addresses.country_code",{"$text":{"$search":keywords}}))
+            pipeline=[{"$match":{"$text":{"$search":keywords}}}]
         else:
             cursor=self.db['institutions'].find()
-            countries=list(self.db["institutions"].distinct("addresses.country_code"))
+            pipeline=[]
+            
+
+        pipeline.append(
+            {
+                "$group":{
+                    "_id":{"country_code":"$addresses.country_code","country":"$addresses.country"}
+                    }
+                }
+        )
+        countries=[]
+        for res in self.db["institutions"].aggregate(pipeline):
+            reg=res["_id"]
+            if reg["country_code"] and reg["country"]:
+                country={"country_code":reg["country_code"][0],"country":reg["country"][0]}
+                if not country in countries:
+                    countries.append(country)
 
         total=cursor.count()
         if not page:
@@ -338,34 +408,29 @@ class ColavSearchApp(HunabkuPluginBase):
         if not self.valid_apikey():
             return self.apikey_error()
         if data=="faculties":
-            if "affiliation" in self.request.args:
-                iid = self.request.args.get('affiliation')
-                result=self.search_branch("faculty",iid)
-            else:
-                result=self.search_branch("faculty")
+            max_results=self.request.args.get('max') if 'max' in self.request.args else 100
+            page=self.request.args.get('page') if 'page' in self.request.args else 1
+            keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
+            result=self.search_branch("faculty",keywords=keywords,max_results=max_results,page=page)
         elif data=="departments":
-            if "affiliation" in self.request.args:
-                iid = self.request.args.get('affiliation')
-                result=self.search_branch("department",iid)
-            else:
-                result=self.search_branch("department")
+            max_results=self.request.args.get('max') if 'max' in self.request.args else 100
+            page=self.request.args.get('page') if 'page' in self.request.args else 1
+            keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
+            result=self.search_branch("department",keywords=keywords,max_results=max_results,page=page)
         elif data=="groups":
-            if "affiliation" in self.request.args:
-                iid = self.request.args.get('affiliation')
-                result=self.search_branch("group",iid)
-            else:
-                result=self.search_branch("group")
+            max_results=self.request.args.get('max') if 'max' in self.request.args else 100
+            page=self.request.args.get('page') if 'page' in self.request.args else 1
+            keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
+            result=self.search_branch("group",keywords=keywords,max_results=max_results,page=page)
         elif data=="authors":
             max_results=self.request.args.get('max') if 'max' in self.request.args else 100
             page=self.request.args.get('page') if 'page' in self.request.args else 1
-            iid = self.request.args.get('affiliation') if "affiliation" in self.request.args else None
-                
-            result=self.search_author(iid,max_results,page)
+            keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
+            result=self.search_author(keywords=keywords,max_results=max_results,page=page)
         elif data=="institutions":
             max_results=self.request.args.get('max') if 'max' in self.request.args else 100
             page=self.request.args.get('page') if 'page' in self.request.args else 1
             keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
-            print(keywords)
             result=self.search_institution(keywords=keywords,max_results=max_results,page=page)
         else:
             result=None
