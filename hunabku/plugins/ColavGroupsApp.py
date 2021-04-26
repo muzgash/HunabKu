@@ -230,8 +230,7 @@ class ColavGroupsApp(HunabkuPluginBase):
             "coauthors":[],
             "geo":[],
             "coauthors_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
-            "institution_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
-            "faculties_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))}
+            "institution_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))}
         }
 
         author_list=list(self.db["documents"].aggregate(pipeline))
@@ -628,6 +627,23 @@ class ColavGroupsApp(HunabkuPluginBase):
             if citations:
                 response = self.app.response_class(
                 response=self.json.dumps(citations),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="coauthors":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            coauthors=self.get_coauthors(idx,start_year,end_year)
+            if coauthors:
+                response = self.app.response_class(
+                response=self.json.dumps(coauthors),
                 status=200,
                 mimetype='application/json'
                 )

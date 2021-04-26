@@ -120,7 +120,7 @@ class ColavAuthorsApp(HunabkuPluginBase):
                     {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}}
                 ]
             else:
-                pipeline=[
+                cites_pipeline=[
                     {"$match":{"authors._id":ObjectId(idx)}}
                 ]
         
@@ -181,6 +181,124 @@ class ColavAuthorsApp(HunabkuPluginBase):
             "start_year":initial_year,
             "end_year":final_year
         }
+        return {"data":entry,"filters":filters}
+
+    def get_coauthors(self,idx=None,start_year=None,end_year=None):
+        self.db = self.dbclient["antioquia"]
+        initial_year=0
+        final_year=0
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            pipeline=[
+                {"$match":{"authors._id":ObjectId(idx)}}
+            ]
+            result=self.db['documents'].find({"authors._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({"authors._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+            if start_year and not end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}}
+                ]
+            elif end_year and not start_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}}
+                ]
+            elif start_year and end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}}
+                ]
+                
+        else:
+            pipeline=[]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+
+        pipeline.extend([
+            {"$project":{"authors":1}},
+            {"$unwind":"$authors"},
+            {"$group":{"_id":"$authors._id","count":{"$sum":1}}},
+            {"$sort":{"count":-1}}
+        ])
+
+        entry={
+            "coauthors":[],
+            "geo":[],
+            "coauthors_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "institution_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))}
+        }
+
+        author_list=list(self.db["documents"].aggregate(pipeline))
+        countries={}
+        for author in author_list:
+            reg=self.db["authors"].find_one({"_id":author["_id"]})
+            if reg:
+                #checks if the author is in the dependency that was asked for, then it must be ignored
+                if reg["branches"] and idx:
+                    found=False
+                    for branch in reg["branches"]:
+                        if str(branch["id"])==idx:
+                            found=True
+                            break
+                    if found:
+                        continue
+
+                if reg["full_name"]=="missing" or "full_name"=="":
+                    continue
+
+                entry["coauthors"].append({
+                    "_id":str(reg["_id"]),
+                    "full_name":reg["full_name"],
+                    "count":author["count"]
+                })
+                
+                #THIS CHECK SHOULD NOT EXISTS, CHECK DB
+                if not "affiliations" in reg.keys():
+                    continue
+                if reg["affiliations"]:
+                    aff=self.db["institutions"].find_one({"_id":reg["affiliations"][0]["id"]})
+                    if aff:
+                        if "addresses" in aff.keys():
+                            if aff["addresses"][0]["country_code"] in countries.keys():
+                                countries[aff["addresses"][0]["country_code"]]["count"]+=author["count"]
+                            else:
+                                countries[aff["addresses"][0]["country_code"]]={
+                                    "country":aff["addresses"][0]["country"],
+                                    "count":author["count"]
+                                }
+        entry["geo"]=countries
+                        
+        filters={
+            "start_year":initial_year,
+            "end_year":final_year
+        }
+
         return {"data":entry,"filters":filters}
 
     def get_production(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
@@ -543,6 +661,23 @@ class ColavAuthorsApp(HunabkuPluginBase):
             if citations:
                 response = self.app.response_class(
                 response=self.json.dumps(citations),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="coauthors":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            coauthors=self.get_coauthors(idx,start_year,end_year)
+            if coauthors:
+                response = self.app.response_class(
+                response=self.json.dumps(coauthors),
                 status=200,
                 mimetype='application/json'
                 )

@@ -179,7 +179,9 @@ class ColavSearchApp(HunabkuPluginBase):
                         "keywords":keywords,
                         "countries":countries
                     },
-                    "count":len(entity_list)
+                    "count":len(entity_list),
+                    "page":page,
+                    "total_results":total
                 }
         else:
             return None
