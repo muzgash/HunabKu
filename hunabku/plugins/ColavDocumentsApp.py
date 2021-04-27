@@ -50,12 +50,17 @@ class ColavDocumentsApp(HunabkuPluginBase):
 
                 entry["authors"].append(author_entry)
             
-            return entry
+            return {"data":entry,"filters":{}}
         else:
             return None
 
     def get_networks(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
-        pass
+        entry={
+            "citations_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "citations":[{}]
+        }
+
+        return {"data":entry,"filters":{}}
 
     @endpoint('/app/documents', methods=['GET'])
     def app_document(self):
