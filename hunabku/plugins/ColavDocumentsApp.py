@@ -26,7 +26,7 @@ class ColavDocumentsApp(HunabkuPluginBase):
                 "external_urls":document["urls"]
             }
 
-            source=self.db["sources"].find_one({"_id":document["source"]["_id"]})
+            source=self.db["sources"].find_one({"_id":document["source"]["id"]})
             entry_source={
                 "name":source["title"],
                 "serials":{}
@@ -40,13 +40,13 @@ class ColavDocumentsApp(HunabkuPluginBase):
                 author_entry={
                     "corresponding":author["corresponding"]
                 }
-                auth_reg=self.db["authors"].find_one({"_id":author["_id"]})
+                auth_reg=self.db["authors"].find_one({"_id":author["id"]})
                 author_entry["name"]=auth_reg["full_name"]
                 author_entry["id"]=auth_reg["_id"]
                 author_entry["affiliations"]=[]
                 for aff in author["affiliations"]:
-                    aff_reg=self.db["institutions"].find_one({"_id":aff["_id"]})
-                    author_entry["affiliations"].append({"name":aff_reg["name"],"id":aff["_id"]})
+                    aff_reg=self.db["institutions"].find_one({"_id":aff["id"]})
+                    author_entry["affiliations"].append({"name":aff_reg["name"],"id":aff_reg["_id"]})
 
                 entry["authors"].append(author_entry)
             

@@ -2,6 +2,8 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 from pickle import load
+from currency_converter import CurrencyConverter
+from datetime import date
 
 class ColavInstitutionsApp(HunabkuPluginBase):
     def __init__(self, hunabku):
@@ -67,35 +69,35 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 print("Could not convert end year to int")
                 return None
         if idx:
-            result=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     initial_year=result[0]["year_published"]
-            result=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     final_year=result[0]["year_published"]
 
             pipeline=[
-                    {"$match":{"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"authors.affiliations.id":ObjectId(idx)}}
             ]
             if start_year and not end_year:
                 cites_pipeline=[
-                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             elif end_year and not start_year:
                 cites_pipeline=[
-                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             elif start_year and end_year:
                 cites_pipeline=[
-                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             else:
                 cites_pipeline=[
-                    {"$match":{"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"authors.affiliations.id":ObjectId(idx)}}
                 ]
 
         else:
@@ -131,8 +133,10 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             cites_list.extend(reg["citations_year"])
             if idx<5:
                 cites5_list.extend(reg["citations_year"])
+        print(cites5_list)
+        print(cites_list)
         entry["H5"]=self.hindex(cites5_list)
-        entry["H"]=self.hindex(cites5_list)
+        entry["H"]=self.hindex(cites_list)
 
         cites_pipeline.extend([
             {"$project":{
@@ -176,29 +180,29 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 return None
         if idx:
             pipeline=[
-                {"$match":{"authors.affiliations._id":ObjectId(idx)}}
+                {"$match":{"authors.affiliations.id":ObjectId(idx)}}
             ]
-            result=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     initial_year=result[0]["year_published"]
-            result=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     final_year=result[0]["year_published"]
             if start_year and not end_year:
                 pipeline=[
-                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             elif end_year and not start_year:
                 pipeline=[
-                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             elif start_year and end_year:
                 pipeline=[
-                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}}
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
                 
         else:
@@ -217,7 +221,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         pipeline.extend([
             {"$unwind":"$authors"},
-            {"$group":{"_id":"$authors.affiliations._id","count":{"$sum":1}}},
+            {"$group":{"_id":"$authors.affiliations.id","count":{"$sum":1}}},
             {"$sort":{"count":-1}},
             {"$unwind":"$_id"},
             {"$lookup":{"from":"institutions","localField":"_id","foreignField":"_id","as":"affiliation"}},
@@ -240,7 +244,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
         pipeline=[pipeline[0]]
         pipeline.extend([
             {"$unwind":"$authors"},
-            {"$group":{"_id":"$authors.affiliations._id","count":{"$sum":1}}},
+            {"$group":{"_id":"$authors.affiliations.id","count":{"$sum":1}}},
             {"$unwind":"$_id"},
             {"$lookup":{"from":"institutions","localField":"_id","foreignField":"_id","as":"affiliation"}},
             {"$project":{"count":1,"affiliation.addresses.country_code":1,"affiliation.addresses.country":1}},
@@ -275,6 +279,91 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         return {"data":entry,"filters":filters}
 
+    def get_venn(self,venn_query):
+        venn_source={
+            "scholar":0,"lens":0,"wos":0,"scopus":0,
+            "scholar_lens":0,"scholar_wos":0,"scholar_scopus":0,"lens_wos":0,"lens_scopus":0,"wos_scopus":0,
+            "scholar_lens_wos":0,"scholar_wos_scopus":0,"scholar_lens_scopus":0,"lens_wos_scopus":0,
+            "scholar_lens_wos_scopus":0
+        }
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":{"$ne":"lens"}},
+                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scopus"}}]
+        venn_source["scholar"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scopus"}}]
+        venn_source["lens"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
+                {"source_checked.source":{"$ne":"lens"}},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":{"$ne":"scopus"}}]
+        venn_source["wos"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
+                {"source_checked.source":{"$ne":"lens"}},
+                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":"scopus"}]
+        venn_source["scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scopus"}}]
+        venn_source["scholar_lens"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":{"$ne":"lens"}},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":{"$ne":"scopus"}}]
+        venn_source["scholar_wos"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":{"$ne":"lens"}},
+                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":"scopus"}]
+        venn_source["scholar_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":{"$ne":"scopus"}}]
+        venn_source["lens_wos"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":"scopus"}]
+        venn_source["lens_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
+                {"source_checked.source":{"$ne":"lens"}},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":"scopus"}]
+        venn_source["wos_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":{"$ne":"scopus"}}]
+        venn_source["scholar_lens_wos"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":{"$ne":"lens"}},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":"scopus"}]
+        venn_source["scholar_wos_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":"scopus"}]
+        venn_source["scholar_lens_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":"scopus"}]
+        venn_source["lens_wos_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_query["$and"]=[{"source_checked.source":"scholar"},
+                {"source_checked.source":"lens"},
+                {"source_checked.source":"wos"},
+                {"source_checked.source":"scopus"}]
+        venn_source["scholar_lens_wos_scopus"]=self.db['documents'].count_documents(venn_query)
+
+        return venn_source
+
     def get_production(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
         self.db = self.dbclient["antioquia"]
         papers=[]
@@ -282,7 +371,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
         final_year=0
         total=0
         open_access={}
-        venn_source={"scholar":0,"lens":0,"oadoi":0,"wos":0,"scopus":0}
+        
         if start_year:
             try:
                 start_year=int(start_year)
@@ -296,46 +385,51 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 print("Could not convert end year to int")
                 return None
         if idx:
-            result=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     initial_year=result[0]["year_published"]
-            result=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     final_year=result[0]["year_published"]
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)})
+                venn_query={"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)})}
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+                venn_query={"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})}
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+                venn_query={"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})}
             else:
-                cursor=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)})
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors.affiliations._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors.affiliations._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors.affiliations._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors.affiliations._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors.affiliations._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)})
+                venn_query={"authors.affiliations.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors.affiliations.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors.affiliations.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors.affiliations.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors.affiliations.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors.affiliations.id":ObjectId(idx)})}
         else:
             cursor=self.db['documents'].find()
+            venn_query={}
             result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
                 result=list(result)
@@ -346,6 +440,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 result=list(result)
                 if len(result)>0:
                     final_year=result[0]["year_published"]
+        
         total=cursor.count()
         if not page:
             page=1
@@ -376,43 +471,35 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         for paper in cursor:
             entry={
-                "_id":paper["_id"],
+                "id":paper["_id"],
                 "title":paper["titles"][0]["title"],
                 "citations_count":paper["citations_count"],
                 "year_published":paper["year_published"],
                 "open_access_status":paper["open_access_status"]
             }
 
-            sources_checked=[]
-            for source in paper["source_checked"]:
-                if not source["source"] in sources_checked:
-                    sources_checked.append(source["source"])
-            if "_".join(sources_checked) in venn_source.keys():
-                venn_source["_".join(sources_checked)]+=1
-            else:
-                venn_source["_".join(sources_checked)]=1
-
-            source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
             if source:
-                entry["source"]={"name":source["title"],"_id":str(source["_id"])}
+                entry["source"]={"name":source["title"],"id":str(source["_id"])}
             authors=[]
             for author in paper["authors"]:
                 au_entry={}
-                author_db=self.db["authors"].find_one({"_id":author["_id"]})
+                author_db=self.db["authors"].find_one({"_id":author["id"]})
                 if author_db:
-                    au_entry={"full_name":author_db["full_name"],"_id":author_db["_id"]}
+                    au_entry={"full_name":author_db["full_name"],"id":author_db["_id"]}
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry={}
-                    aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
+                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
-                        aff_entry={"name":aff_db["name"],"_id":aff_db["_id"]}
+                        aff_entry={"name":aff_db["name"],"id":aff_db["_id"]}
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
-                            branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
-                            if branch_db:
-                                branches.append({"name":branch_db["name"],"type":branch_db["type"],"_id":branch_db["_id"]})
+                            if "id" in branch.keys():
+                                branch_db=self.db["branches"].find_one({"_id":branch["id"]})
+                                if branch_db:
+                                    branches.append({"name":branch_db["name"],"type":branch_db["type"],"id":branch_db["_id"]})
                     aff_entry["branches"]=branches
                     affiliations.append(aff_entry)
                 au_entry["affiliations"]=affiliations
@@ -422,7 +509,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
         return {
             "data":papers,
             "open_access":open_access,
-            "venn_source":venn_source,
+            "venn_source":self.get_venn(venn_query),
             "count":len(papers),
             "page":page,
             "total_results":total,
@@ -431,6 +518,84 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 "end_year":final_year
                 }
         }
+    
+    def get_apc(self,idx=None,start_year=None,end_year=None):
+        self.db = self.dbclient["antioquia"]
+        initial_year=0
+        final_year=0
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+
+            pipeline=[
+                    {"$match":{"authors.affiliations.id":ObjectId(idx)}}
+            ]
+            if start_year and not end_year:
+                cites_pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif end_year and not start_year:
+                cites_pipeline=[
+                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif start_year and end_year:
+                cites_pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            else:
+                cites_pipeline=[
+                    {"$match":{"authors.affiliations.id":ObjectId(idx)}}
+                ]
+
+        else:
+            pipeline=[]
+            cites_pipeline=[]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+        
+        entry={
+            "yearly":[],
+            "faculty":[],
+            "department":[],
+            "publisher":[],
+            "openaccess":[]
+        }
+
+        filters={
+            "start_year":initial_year,
+            "end_year":final_year
+        }
+
+        return {"data":entry,"filters":filters}
 
     @endpoint('/app/institutions', methods=['GET'])
     def app_institutions(self):

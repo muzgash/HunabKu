@@ -27,7 +27,7 @@ class ColavSearchApp(HunabkuPluginBase):
                 {"$group":{"_id":"$affiliation"}}
             ]
 
-        affiliations=[reg["_id"] for reg in self.db["authors"].aggregate(aff_pipeline)]
+        affiliations=[reg["id"] for reg in self.db["authors"].aggregate(aff_pipeline)]
 
         countries=[]
         country_list=[]
@@ -257,6 +257,113 @@ class ColavSearchApp(HunabkuPluginBase):
                 }
         else:
             return None
+
+    def search_documents(self,keywords="",country="",max_results=100,page=1):
+        self.db = self.dbclient["antioquia"]
+        if keywords:
+            if country:
+                cursor=self.db['institutions'].find({"$text":{"$search":keywords},"addresses.country_code":country})
+            else:
+                cursor=self.db['institutions'].find({"$text":{"$search":keywords}})
+            country_pipeline=[{"$match":{"$text":{"$search":keywords}}}]
+            aff_pipeline=[
+                {"$match":{"$text":{"$search":keywords}}}
+            ]
+        else:
+            if country:
+                cursor=self.db['institutions'].find({"addresses.country_code":country})
+            else:
+                cursor=self.db['institutions'].find()
+            country_pipeline=[]
+            aff_pipeline=[]
+
+        aff_pipeline.extend([
+                {"$unwind":"$affiliations"},{"$project":{"affiliations":1}},
+                {"$group":{"_id":"$_id","affiliation":{"$last":"$affiliations"}}},
+                {"$group":{"_id":"$affiliation"}}
+            ])
+        affiliations=[reg["_id"] for reg in self.db["authors"].aggregate(aff_pipeline)]
+            
+
+        country_pipeline.append(
+            {
+                "$group":{
+                    "_id":{"country_code":"$addresses.country_code","country":"$addresses.country"}
+                    }
+                }
+        )
+        countries=[]
+        for res in self.db["institutions"].aggregate(country_pipeline):
+            reg=res["_id"]
+            if reg["country_code"] and reg["country"]:
+                country={"country_code":reg["country_code"][0],"country":reg["country"][0]}
+                if not country in countries:
+                    countries.append(country)
+
+        total=cursor.count()
+        if not page:
+            page=1
+        else:
+            try:
+                page=int(page)
+            except:
+                print("Could not convert end page to int")
+                return None
+        if not max_results:
+            max_results=100
+        else:
+            try:
+                max_results=int(max_results)
+            except:
+                print("Could not convert end max to int")
+                return None
+        cursor=cursor.skip(max_results*(page-1)).limit(max_results)
+
+        if cursor:
+            paper_list=[]
+            for paper in cursor:
+                entry={
+                    "id":paper["_id"],
+                    "title":paper["titles"][0]["title"],
+                    "authors":[],
+                    "source":"",
+                    "year_published":paper["year_published"],
+                    "citations_count":paper["citations_count"]
+                }
+
+                source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+                if source:
+                    entry["source"]={"name":source["title"],"id":source["_id"]}
+                
+                authors=[]
+                for author in paper["authors"]:
+                    reg_au=self.db["authors"].find_one({"_id":author["_id"]})
+                    reg_aff=""
+                    if author["affiliations"]:
+                        reg_aff=self.db["institutions"].find_one({"_id":author["affiliations"][0]["_id"]})
+                    author_entry={
+                        "id":reg_au["_id"],
+                        "name":reg_au["full_name"],
+                        "affiliation":""
+                    }
+                    if  reg_aff:
+                        author_entry["affiliation"]={"id":reg_aff["_id"],"name":reg_aff["name"]}
+                    authors.append(author_entry)
+                entry["authors"]=authors
+
+                paper_list.append(entry)
+
+            return {"data":paper_list,
+                    "filters":{
+                        "keywords":[],
+                        "countries":countries
+                    },
+                    "count":len(paper_list),
+                    "page":page,
+                    "total_results":total
+                }
+        else:
+            return None
         
 
     @endpoint('/app/search', methods=['GET'])
@@ -416,6 +523,8 @@ class ColavSearchApp(HunabkuPluginBase):
             keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
             country = self.request.args.get('country') if "country" in self.request.args else ""
             result=self.search_institution(keywords=keywords,country=country,max_results=max_results,page=page)
+        elif data=="documents":
+            result=self.search_documents(keywords=keywords,country=country,max_results=max_results,page=page)
         else:
             result=None
         if result:
