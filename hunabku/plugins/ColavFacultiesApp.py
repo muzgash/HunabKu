@@ -302,86 +302,86 @@ class ColavFacultiesApp(HunabkuPluginBase):
 
     def get_venn(self,venn_query):
         venn_source={
-            "scholar":0,"lens":0,"wos":0,"scopus":0,
-            "scholar_lens":0,"scholar_wos":0,"scholar_scopus":0,"lens_wos":0,"lens_scopus":0,"wos_scopus":0,
-            "scholar_lens_wos":0,"scholar_wos_scopus":0,"scholar_lens_scopus":0,"lens_wos_scopus":0,
-            "scholar_lens_wos_scopus":0
+            "scholar":0,"lens":0,"scielo":0,"scopus":0,
+            "scholar_lens":0,"scholar_scielo":0,"scholar_scopus":0,"lens_scielo":0,"lens_scopus":0,"scielo_scopus":0,
+            "scholar_lens_scielo":0,"scholar_scielo_scopus":0,"scholar_lens_scopus":0,"lens_scielo_scopus":0,
+            "scholar_lens_scielo_scopus":0
         }
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":{"$ne":"lens"}},
-                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scielo"}},
                 {"source_checked.source":{"$ne":"scopus"}}]
         venn_source["scholar"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scielo"}},
                 {"source_checked.source":{"$ne":"scopus"}}]
         venn_source["lens"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
                 {"source_checked.source":{"$ne":"lens"}},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":{"$ne":"scopus"}}]
-        venn_source["wos"]=self.db['documents'].count_documents(venn_query)
+        venn_source["scielo"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
                 {"source_checked.source":{"$ne":"lens"}},
-                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scielo"}},
                 {"source_checked.source":"scopus"}]
         venn_source["scopus"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scielo"}},
                 {"source_checked.source":{"$ne":"scopus"}}]
         venn_source["scholar_lens"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":{"$ne":"lens"}},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":{"$ne":"scopus"}}]
-        venn_source["scholar_wos"]=self.db['documents'].count_documents(venn_query)
+        venn_source["scholar_scielo"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":{"$ne":"lens"}},
-                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scielo"}},
                 {"source_checked.source":"scopus"}]
         venn_source["scholar_scopus"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":{"$ne":"scopus"}}]
-        venn_source["lens_wos"]=self.db['documents'].count_documents(venn_query)
+        venn_source["lens_scielo"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scielo"}},
                 {"source_checked.source":"scopus"}]
         venn_source["lens_scopus"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
                 {"source_checked.source":{"$ne":"lens"}},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":"scopus"}]
-        venn_source["wos_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_source["scielo_scopus"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":{"$ne":"scopus"}}]
-        venn_source["scholar_lens_wos"]=self.db['documents'].count_documents(venn_query)
+        venn_source["scholar_lens_scielo"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":{"$ne":"lens"}},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":"scopus"}]
-        venn_source["scholar_wos_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_source["scholar_scielo_scopus"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":{"$ne":"wos"}},
+                {"source_checked.source":{"$ne":"scielo"}},
                 {"source_checked.source":"scopus"}]
         venn_source["scholar_lens_scopus"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":{"$ne":"scholar"}},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":"scopus"}]
-        venn_source["lens_wos_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_source["lens_scielo_scopus"]=self.db['documents'].count_documents(venn_query)
         venn_query["$and"]=[{"source_checked.source":"scholar"},
                 {"source_checked.source":"lens"},
-                {"source_checked.source":"wos"},
+                {"source_checked.source":"scielo"},
                 {"source_checked.source":"scopus"}]
-        venn_source["scholar_lens_wos_scopus"]=self.db['documents'].count_documents(venn_query)
+        venn_source["scholar_lens_scielo_scopus"]=self.db['documents'].count_documents(venn_query)
 
         return venn_source
 
@@ -392,7 +392,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
         final_year=0
         total=0
         open_access={}
-        venn_source={"scholar":0,"lens":0,"oadoi":0,"wos":0,"scopus":0}
+
         if start_year:
             try:
                 start_year=int(start_year)
