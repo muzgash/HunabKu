@@ -252,7 +252,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             {"$unwind":"$affiliation.addresses"},
             {"$sort":{"count":-1}}
         ])
-        for reg in self.db["documents"].aggregate(pipeline):
+        for reg in self.db["documents"].aggregate(pipeline,allowDiskUse=True):
             #print(reg)
             if str(reg["_id"])==idx:
                 continue
