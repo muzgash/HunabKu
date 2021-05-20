@@ -548,29 +548,26 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 if len(result)>0:
                     final_year=result[0]["year_published"]
 
-            pipeline=[
-                    {"$match":{"authors.affiliations.id":ObjectId(idx)}}
-            ]
             if start_year and not end_year:
-                cites_pipeline=[
+                pipeline=[
                     {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             elif end_year and not start_year:
-                cites_pipeline=[
+                pipeline=[
                     {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             elif start_year and end_year:
-                cites_pipeline=[
+                pipeline=[
                     {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
                 ]
             else:
-                cites_pipeline=[
+                pipeline=[
                     {"$match":{"authors.affiliations.id":ObjectId(idx)}}
                 ]
 
         else:
             pipeline=[]
-            cites_pipeline=[]
+
             result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
                 result=list(result)
@@ -583,12 +580,66 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     final_year=result[0]["year_published"]
         
         entry={
-            "yearly":[],
-            "faculty":[],
-            "department":[],
-            "publisher":[],
-            "openaccess":[]
+            "yearly":{},
+            "faculty":{},
+            "department":{},
+            "publisher":{},
+            "openaccess":{}
         }
+
+        pipeline.extend([
+            {"$lookup":{"from":"sources","localField":"source.id","foreignField":"_id","as":"source"}},
+            {"$project":{"authors":1,"source.apc_charges":1,"source.apc_currency":1,"source.publisher":1,"year_published":1,"open_access_status":1}},
+            {"$match":{"source.apc_charges":{"$ne":""}}},
+            {"$unwind":"$source"}
+        ])
+
+        c = CurrencyConverter()
+        for reg in self.db["documents"].aggregate(pipeline):
+            value=0
+            if reg["source"]["apc_currency"]=="USD":
+                value=reg["source"]["apc_charges"]
+            else:
+                try:
+                    value=c.convert(reg["source"]["apc_charges"], reg["source"]["apc_currency"], 'USD')
+                except Exception as e:
+                    print("Could not convert currency with error: ",e)
+            if reg["year_published"] in entry["yearly"].keys():
+                entry["yearly"][reg["year_published"]]+=value
+            else:
+                entry["yearly"][reg["year_published"]]=value
+            if reg["source"]["publisher"]:
+                if reg["source"]["publisher"] in entry["publisher"].keys():
+                    entry["publisher"][reg["source"]["publisher"]]+=value
+                else:
+                    entry["publisher"][reg["source"]["publisher"]]=value
+            if reg["open_access_status"]:
+                if reg["open_access_status"] in entry["openaccess"].keys():
+                    entry["openaccess"][reg["open_access_status"]]+=value
+                else:
+                    entry["openaccess"][reg["open_access_status"]]=value
+            found=0
+            for author in reg["authors"]:
+                for aff in author["affiliations"]:
+                    if not "branches" in aff.keys():
+                        continue
+                    for branch in aff["branches"]:
+                        if not "id" in branch.keys():
+                            continue
+                        if str(branch["type"])=="faculty":
+                            if str(branch["id"]) in entry["faculty"].keys():
+                                entry["faculty"][str(branch["id"])]["value"]+=value
+                            else:
+                                entry["faculty"][str(branch["id"])]={"name":branch["name"],"value":value}
+                            found+=1
+                        if branch["type"]=="department":
+                            if str(branch["id"]) in entry["department"].keys():
+                                entry["department"][str(branch["id"])]["value"]+=value
+                            else:
+                                entry["department"][str(branch["id"])]={"name":branch["name"],"value":value}
+                            found+=1
+                if found>0:
+                    break
 
         filters={
             "start_year":initial_year,
@@ -905,13 +956,6 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     "citations": 1815,
                     "H5": 8,
                     "yearly_citations": {
-                    "1995": 11,
-                    "2000": 8,
-                    "2002": 5,
-                    "2004": 6,
-                    "2005": 150,
-                    "2006": 63,
-                    "2007": 611,
                     "2008": 10,
                     "2009": 137,
                     "2010": 240,
@@ -933,6 +977,145 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     "final_year": 2020
                 }
             }
+        @apiSuccessExample {json} Success-Response (data=apc):
+            HTTP/1.1 200 OK
+            {
+                "data": {
+                    "yearly": {
+                    "2006": 25333.215809352663,
+                    "2007": 31212.916051395667,
+                    "2008": 55634.25857670785,
+                    "2009": 54698.475858931975,
+                    "2010": 47683.47371715034,
+                    "2011": 84837.57770613344,
+                    "2012": 87631.29377989819,
+                    "2013": 106924.28252286707,
+                    "2014": 171037.16532375227,
+                    "2015": 159642.93025535543,
+                    "2016": 220892.6144583558,
+                    "2017": 246995.35012787356,
+                    "2018": 301777.0124037427,
+                    "2019": 346262.03413552087,
+                    "2020": 154102.28675748224
+                    },
+                    "faculty": {
+                    "602c50d1fd74967db066383b": {
+                        "name": "Facultad de Medicina",
+                        "value": 688505.4513403034
+                    },
+                    "602c50d1fd74967db066383a": {
+                        "name": "Facultad de Ingeniería",
+                        "value": 175085.68733245516
+                    },
+                    "602c50d1fd74967db0663833": {
+                        "name": "Facultad de Ciencias Exactas y Naturales",
+                        "value": 380902.37390428863
+                    },
+                    "602c50d1fd74967db0663831": {
+                        "name": "Facultad de Ciencias Agrarias",
+                        "value": 89374.5371867811
+                    },
+                    "602c50d1fd74967db0663835": {
+                        "name": "Facultad de Ciencias Sociales y Humanas",
+                        "value": 2237.28
+                    }
+                    },
+                    "department": {
+                    "602c50f9fd74967db0663895": {
+                        "name": "Departamento de Medicina Interna",
+                        "value": 69074.85558893369
+                    },
+                    "602c50f9fd74967db0663883": {
+                        "name": "Departamento de Ingeniería Industrial",
+                        "value": 2317.4396001110804
+                    },
+                    "602c50f9fd74967db066385a": {
+                        "name": "Instituto de Biología",
+                        "value": 182704.58261736613
+                    },
+                    "602c50f9fd74967db066389e": {
+                        "name": "Instituto de Investigaciones Médicas",
+                        "value": 174915.39038552568
+                    },
+                    "602c50f9fd74967db0663892": {
+                        "name": "Departamento de Farmacología y Toxicología",
+                        "value": 26714.37762811528
+                    },
+                    "602c50f9fd74967db0663890": {
+                        "name": "Departamento de Fisiología",
+                        "value": 37428.57597151719
+                    },
+                    "602c50f9fd74967db0663886": {
+                        "name": "Departamento de Ingeniería Sanitaria  y Ambiental",
+                        "value": 24313.601526199076
+                    },
+                    "602c50f9fd74967db066388f": {
+                        "name": "Departamento de Morfología",
+                        "value": 3495
+                    }
+                    },
+                    "publisher": {
+                    "Hindawi Limited": 81695,
+                    "BMC": 352120.33776623,
+                    "Asociación Colombiana de Infectología": 7600,
+                    "MDPI AG": 336352.0133296308,
+                    "Public Library of Science (PLoS)": 259525,
+                    "Frontiers Media S.A.": 235850,
+                    "Nature Publishing Group": 90946.40866978905,
+                    "Colégio Brasileiro de Cirurgiões": 185.4154543505559,
+                    "The Association for Research in Vision and Ophthalmology": 31450,
+                    "Elsevier": 203307.67999999988,
+                    "Cambridge University Press": 25278.385141020815,
+                    "The Journal of Infection in Developing Countries": 3102.0696,
+                    "Arán Ediciones, S. L.": 19614.96000000001,
+                    "Fundação de Amparo à Pesquisa do Estado de SP": 1600,
+                    "BMJ Publishing Group": 48223.376978564826,
+                    "Wiley": 53579,
+                    "American Chemical Society": 1500,
+                    "F1000 Research Ltd": 5000,
+                    "Universidad de Antioquia": 98100,
+                    "Universidade de São Paulo": 8457.478178310004,
+                    "Sociedade Brasileira de Química": 4069.671679274754,
+                    "Pharmacotherapy Group, University of Benin, Benin City": 2000,
+                    "American Society for Microbiology": 14400,
+                    "Association of Support to Oral Health Research (APESB)": 390,
+                    "Instituto de Investigaciones Agropecuarias, INIA": 650,
+                    "Tehran University of Medical Sciences": 0,
+                    "Wolters Kluwer Medknow Publications": 500,
+                    "Oxford University Press": 21739.34566339612,
+                    "Taylor & Francis Group": 26643.648080407507,
+                    "SAGE Publishing": 36846,
+                    "IEEE": 7000,
+                    "SpringerOpen": 19443.777360090255,
+                    "The British Editorial Society of Bone & Joint Surgery": 1816.2,
+                    "The Royal Society": 2483.607398037674,
+                    "African Field Epidemiology Network": 180,
+                    "Instituto de Tecnologia de Alimentos (ITAL)": 74.16618174022236,
+                    "Universidade Federal de Santa Catarina, Programa de Pós Graduação em Enfermagem": 135.3532816759058,
+                    "SciELO": 1000,
+                    "International Medical Society": 726.48,
+                    "Universidad Nacional de Trujillo": 250,
+                    "FEADEF": 242.16000000000003,
+                    "Fundación Revista Medicina": 0,
+                    "Iranian Medicinal Plants Society": 215,
+                    "Universidad Autónoma de Yucatán": 400,
+                    "Fundação Odontológica de Ribeirão Preto": 101.97849989280574,
+                    "Facultad de Ciencias Agrarias. Universidad Nacional de Cuyo": 300,
+                    "Exeley Inc.": 500
+                    },
+                    "openaccess": {
+                    "gold": 1723132.3620811182,
+                    "closed": 67762.23068810394,
+                    "bronze": 52978.00656463765,
+                    "green": 34771.15632984965,
+                    "hybrid": 48339.07216847288
+                    }
+                },
+                "filters": {
+                    "start_year": 1925,
+                    "end_year": 2020
+                }
+                }
         """
         data = self.request.args.get('data')
         if not self.valid_apikey():
@@ -997,6 +1180,23 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             if coauthors:
                 response = self.app.response_class(
                 response=self.json.dumps(coauthors),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="apc":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            apc=self.get_apc(idx,start_year,end_year)
+            if apc:
+                response = self.app.response_class(
+                response=self.json.dumps(apc),
                 status=200,
                 mimetype='application/json'
                 )

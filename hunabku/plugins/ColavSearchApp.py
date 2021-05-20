@@ -15,7 +15,7 @@ class ColavSearchApp(HunabkuPluginBase):
             aff_pipeline=[
                 {"$match":{"$text":{"$search":keywords}}},
                 {"$unwind":"$affiliations"},{"$project":{"affiliations":1}},
-                {"$group":{"_id":"$_id","affiliation":{"$last":"$affiliations"}}},
+                {"$group":{"_id":"$id","affiliation":{"$last":"$affiliations"}}},
                 {"$group":{"_id":"$affiliation"}}
             ]
         else:
@@ -23,11 +23,11 @@ class ColavSearchApp(HunabkuPluginBase):
             pipeline=[]
             aff_pipeline=[
                 {"$unwind":"$affiliations"},{"$project":{"affiliations":1}},
-                {"$group":{"_id":"$_id","affiliation":{"$last":"$affiliations"}}},
+                {"$group":{"_id":"$id","affiliation":{"$last":"$affiliations"}}},
                 {"$group":{"_id":"$affiliation"}}
             ]
 
-        affiliations=[reg["id"] for reg in self.db["authors"].aggregate(aff_pipeline)]
+        affiliations=[reg["_id"] for reg in self.db["authors"].aggregate(aff_pipeline)]
 
         countries=[]
         country_list=[]

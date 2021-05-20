@@ -30,6 +30,7 @@ class ColavAuthorsApp(HunabkuPluginBase):
                 if inst_db:
                     entry["country_code"]=inst_db["addresses"][0]["country_code"]
                     entry["country"]=inst_db["addresses"][0]["country"]
+                    entry["logo"]=inst_db["logo_url"]
             sources=[]
             for ext in author["external_ids"]:
                 if ext["source"]=="researchid" and not "researcherid" in sources:
