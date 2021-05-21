@@ -25,13 +25,13 @@ class ColavFacultiesApi(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches.id":ObjectId(idx)})
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches.id":ObjectId(idx)})
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches.id":ObjectId(idx)})
             else:
-                cursor=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"authors.affiliations.branches.id":ObjectId(idx)})
         else:
             cursor=self.db['documents'].find()
 
@@ -68,18 +68,13 @@ class ColavFacultiesApi(HunabkuPluginBase):
 
         for paper in cursor:
             entry=paper
-            del(entry["abstract_idx"])
-            for title in entry["titles"]:
-                del(title["title_idx"])
-            source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
             if source:
-                del(source["title_idx"])
-                del(source["publisher_idx"])
                 entry["source"]=source
             authors=[]
             for author in paper["authors"]:
                 au_entry=author
-                author_db=self.db["authors"].find_one({"_id":author["_id"]})
+                author_db=self.db["authors"].find_one({"_id":author["id"]})
                 if author_db:
                     au_entry=author_db
                 if "aliases" in au_entry.keys():
@@ -89,11 +84,9 @@ class ColavFacultiesApi(HunabkuPluginBase):
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry=aff
-                    aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
+                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
                         aff_entry=aff_db
-                    if "name_idx" in aff_entry.keys():
-                        del(aff_entry["name_idx"])
                     if "addresses" in aff_entry.keys():
                         for add in aff_entry["addresses"]:
                             if "geonames_city" in add.keys():
@@ -103,10 +96,9 @@ class ColavFacultiesApi(HunabkuPluginBase):
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
-                            branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
+                            branch_db=self.db["branches"].find_one({"_id":branch["id"]}) if "id" in branch.keys() else ""
                             if branch_db:
                                 del(branch_db["aliases"])
-                                del(branch_db["name_idx"])
                                 if "addresses" in branch_db.keys():
                                     for add in branch_db["addresses"]:
                                         del(add["geonames_city"])
@@ -194,859 +186,1345 @@ class ColavFacultiesApi(HunabkuPluginBase):
         @apiError (Error 200) msg  The HTTP 200 OK.
 
         @apiSuccessExample {json} Success-Response (data=info):
-            HTTP/1.1 200 OK
-            {
-                "id": "602c50d1fd74967db0663833",
-                "name": "Facultad de ciencias exactas y naturales",
-                "type": "faculty",
-                "external_urls": [
+        HTTP/1.1 200 OK
+        {
+            "id": "602c50d1fd74967db0663835",
+            "name": "Facultad de Ciencias Sociales y Humanas",
+            "type": "faculty",
+            "external_urls": [
+                {
+                "source": "website",
+                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/institucional/unidades-academicas/facultades/ciencias-sociales-humanas"
+                }
+            ],
+            "departments": [
+                {
+                "id": "602c50f9fd74967db066385e",
+                "name": "Departamento de Historia"
+                },
+                {
+                "id": "602c50f9fd74967db066385f",
+                "name": "Departamento de Antropología"
+                },
+                {
+                "id": "602c50f9fd74967db0663860",
+                "name": "Departamento de Sicología"
+                },
+                {
+                "id": "602c50f9fd74967db0663861",
+                "name": "Departamento de Sociología"
+                },
+                {
+                "id": "602c50f9fd74967db0663862",
+                "name": "Departamento de Trabajo Social"
+                },
+                {
+                "id": "602c50f9fd74967db0663863",
+                "name": "Departamento de Psicoanálisis"
+                }
+            ],
+            "groups": [
+                {
+                "id": "602c510ffd74967db06639c7",
+                "name": "Grupo de Investigación en Historia Social"
+                },
+                {
+                "id": "602c510ffd74967db06638d5",
+                "name": "Analisis de Residuos"
+                },
+                {
+                "id": "602c510ffd74967db06639e3",
+                "name": "Psicoanálisis, Sujeto y Sociedad"
+                }
+            ],
+            "authors": [
+                {
+                "full_name": "Cesar Augusto Lenis Ballesteros",
+                "id": "5fc7a46b9a7d07412f6cd3a0"
+                },
+                {
+                "full_name": "Alberto Leon Gutierrez Tamayo",
+                "id": "5fc81ecf9a7d07412f6cd3c1"
+                },
+                {
+                "full_name": "Guillermo Antonio Correa Montoya",
+                "id": "5fc820459a7d07412f6cd3c2"
+                },
+                {
+                "full_name": "Jesus Gallo",
+                "id": "5fc822199a7d07412f6cd3c3"
+                },
+                {
+                "full_name": "Gabriel Jaime Velez Cuartas",
+                "id": "5fc823a79a7d07412f6cd3c4"
+                }
+            ],
+            "institution": [
+                {
+                "name": "Universidad de Antioquia",
+                "id": "60120afa4749273de6161883",
+                "logo": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg"
+                }
+            ]
+        }
+        @apiSuccessExample {json} Success-Response (data=production):
+        HTTP/1.1 200 OK
+        {
+            "data": [
+                {
+                "_id": "606a4c6aaa884b9a1562e46a",
+                "updated": 1617579113,
+                "source_checked": [
                     {
-                    "source": "website",
-                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                    }
-                ],
-                "departments": [
-                    {
-                    "id": "602c50f9fd74967db0663858",
-                    "name": "Instituto de matemáticas"
-                    }
-                ],
-                "groups": [
-                    {
-                    "id": "602c510ffd74967db06639a7",
-                    "name": "Modelación con ecuaciones diferenciales"
+                    "source": "lens",
+                    "ts": 1617579113
                     },
                     {
-                    "id": "602c510ffd74967db06639ad",
-                    "name": "álgebra u de a"
+                    "source": "oadoi",
+                    "ts": 1617579113
+                    },
+                    {
+                    "source": "scholar",
+                    "ts": 1617579113
                     }
                 ],
+                "publication_type": "journal article",
+                "titles": [
+                    {
+                    "title": "Representaciones sobre lo indígena y su vínculo con tendencias culturales globalizadas",
+                    "lang": "es"
+                    }
+                ],
+                "subtitle": "",
+                "abstract": "This article describes a set of representations about native cultures manifested in a sector of the non-indigenous population of Colombia, where shamanism is increasingly mentioned, and where natives are imagined as having a spiritual and alternative wisdom beneficial to western societies. The analysis of these and other ideas reveals similarities with the narratives used to represent other indigenous or ethnic cultures in different latitudes. Those similarities, it is argued, do not come from objective cultural resemblances between ethnic groups; they come from common sociocultural characteristics of the people who construct those representations of the ethnic. These findings support the conclusion that this kind of indigenism is the local manifestation of a globalized ideology centered on the ideals and needs of the modern self.",
+                "keywords": [],
+                "start_page": 163,
+                "end_page": 184,
+                "volume": "14",
+                "issue": "27",
+                "date_published": 1435708800,
+                "year_published": 2015,
+                "languages": [],
+                "bibtex": "@article{sarrazin2015representaciones,\n  title={Representaciones sobre lo ind{\\'\\i}gena y su v{\\'\\i}nculo con tendencias culturales globalizadas},\n  author={Sarrazin, Jean Paul},\n  journal={Anagramas Rumbos y Sentidos de la Comunicaci{\\'o}n},\n  volume={14},\n  number={27},\n  pages={163--184},\n  year={2015}\n}\n",
+                "funding_organization": "",
+                "funding_details": "",
+                "is_open_access": true,
+                "open_access_status": "gold",
+                "external_ids": [
+                    {
+                    "source": "lens",
+                    "id": "174-213-784-605-277"
+                    },
+                    {
+                    "source": "magid",
+                    "id": "2206271623"
+                    },
+                    {
+                    "source": "doi",
+                    "id": "10.22395/angr.v14n27a9"
+                    },
+                    {
+                    "source": "scholar",
+                    "id": "5OZ9yk1GuksJ"
+                    }
+                ],
+                "urls": [],
+                "source": {
+                    "_id": "600f50271fc9947fc8a8de90",
+                    "updated": 1617579114,
+                    "source_checked": [
+                    {
+                        "source": "doaj",
+                        "ts": 1611616295
+                    },
+                    {
+                        "source": "scholar",
+                        "date": 1617579113
+                    },
+                    {
+                        "source": "lens",
+                        "date": 1617579113
+                    }
+                    ],
+                    "title": "Anagramas Rumbos y Sentidos de la Comunicación",
+                    "type": "",
+                    "publisher": "Universidad de Medellín, Sello Editorial",
+                    "publisher_idx": "universidad de medellín, sello editorial",
+                    "institution": "Universidad de Medellín",
+                    "institution_id": "60120d554749273de6167ede",
+                    "external_urls": [
+                    {
+                        "source": "site",
+                        "url": "http://revistas.udem.edu.co/index.php/anagramas"
+                    }
+                    ],
+                    "country": "CO",
+                    "editorial_review": "Double blind peer review",
+                    "submission_charges": "",
+                    "submission_charges_url": "",
+                    "submmission_currency": "",
+                    "apc_charges": "",
+                    "apc_currency": "",
+                    "apc_url": "",
+                    "serials": [
+                    {
+                        "type": "pissn",
+                        "value": "16922522"
+                    },
+                    {
+                        "type": "eissn",
+                        "value": "22484086"
+                    }
+                    ],
+                    "abbreviations": [],
+                    "aliases": [],
+                    "subjects": [
+                    {
+                        "code": "P87-96",
+                        "scheme": "LCC",
+                        "term": "Communication. Mass media"
+                    }
+                    ],
+                    "keywords": [
+                    "literature",
+                    "education",
+                    "culture",
+                    "comunication",
+                    "social movements",
+                    "movies"
+                    ],
+                    "author_copyright": "False",
+                    "license": [
+                    {
+                        "embedded_example_url": "http://revistas.udem.edu.co/index.php/anagramas/article/view/1180",
+                        "NC": true,
+                        "ND": false,
+                        "BY": true,
+                        "open_access": true,
+                        "title": "CC BY-NC",
+                        "type": "CC BY-NC",
+                        "embedded": true,
+                        "url": "http://revistas.udem.edu.co/index.php/anagramas/about/editorialPolicies#openAccessPolicy",
+                        "SA": false
+                    }
+                    ],
+                    "languages": [
+                    "EN",
+                    "PT",
+                    "ES"
+                    ],
+                    "plagiarism_detection": false,
+                    "active": true,
+                    "publication_time": 6,
+                    "deposit_policies": ""
+                },
+                "author_count": 1,
                 "authors": [
                     {
-                    "full_name": "Roberto Cruz Rodes",
-                    "id": "5fc5a419b246cc0887190a64"
-                    },
-                    {
-                    "full_name": "Jairo Eloy Castellanos Ramos",
-                    "id": "5fc5a4b7b246cc0887190a65"
+                    "_id": "5fc817dd9a7d07412f6cd3bc",
+                    "full_name": "Jean Paul Sarrazin Martinez",
+                    "first_names": "Jean Paul",
+                    "last_names": "Sarrazin Martinez",
+                    "initials": "JP",
+                    "affiliations": [
+                        {
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
+                        "abbreviations": [],
+                        "types": [
+                            "Education"
+                        ],
+                        "relationships": [
+                            {
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
+                            "external_ids": [
+                                {
+                                "source": "grid",
+                                "value": "grid.413348.9"
+                                }
+                            ],
+                            "id": ""
+                            }
+                        ],
+                        "addresses": [
+                            {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO"
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
+                        ],
+                        "external_ids": [
+                            {
+                            "source": "grid",
+                            "value": "grid.412881.6"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100005278"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "2696975"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1258413"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
+                            }
+                        ],
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": [
+                            {
+                            "_id": "602c50d1fd74967db0663835",
+                            "name": "Facultad de Ciencias Sociales y Humanas",
+                            "abbreviations": [
+                                "FCSH"
+                            ],
+                            "type": "faculty",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": ""
+                                }
+                            ],
+                            "external_urls": [
+                                {
+                                "source": "website",
+                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/institucional/unidades-academicas/facultades/ciencias-sociales-humanas"
+                                }
+                            ],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c50f9fd74967db0663861",
+                            "name": "Departamento de Sociología",
+                            "abbreviations": [],
+                            "type": "department",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": ""
+                                }
+                            ],
+                            "external_urls": [],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c510ffd74967db0663936",
+                            "name": "Religión, Cultura y Sociedad",
+                            "abbreviations": [],
+                            "type": "group",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": "gruporeligionculturaysociedad@udea.edu.co"
+                                }
+                            ],
+                            "external_urls": [
+                                {
+                                "source": "gruplac",
+                                "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000001604"
+                                }
+                            ],
+                            "external_ids": [
+                                {
+                                "source": "colciencias",
+                                "id": "COL0015669"
+                                }
+                            ],
+                            "keywords": [],
+                            "subjects": [
+                                {
+                                "source": "area_ocde",
+                                "subjects": [
+                                    "humanidades"
+                                ]
+                                },
+                                {
+                                "source": "subarea_ocde",
+                                "subjects": [
+                                    "historia y arqueología"
+                                ]
+                                },
+                                {
+                                "source": "udea",
+                                "subjects": [
+                                    "ciencias sociales"
+                                ]
+                                },
+                                {
+                                "source": "gruplac",
+                                "subjects": [
+                                    "conflictos, religiones y religiosidades",
+                                    "esoterismos y espiritualidades mágicas",
+                                    "globalización, secularización y revitalización de las religiones",
+                                    "iconografía de lo sagrado",
+                                    "instituciones y sociabilidades religiosas"
+                                ]
+                                }
+                            ]
+                            }
+                        ]
+                        }
+                    ],
+                    "keywords": [
+                        "elites",
+                        "cultural hegemony",
+                        "indigenism",
+                        "identity"
+                    ],
+                    "external_ids": [
+                        {
+                        "source": "orcid",
+                        "value": "0000-0002-8022-4674"
+                        },
+                        {
+                        "source": "researchid",
+                        "value": "B-2896-2017"
+                        },
+                        {
+                        "source": "scopus",
+                        "value": "56457940700"
+                        }
+                    ],
+                    "branches": [
+                        {
+                        "name": "Facultad de Ciencias Sociales y Humanas",
+                        "type": "faculty",
+                        "id": "602c50d1fd74967db0663835"
+                        },
+                        {
+                        "name": "Departamento de Sociología",
+                        "type": "department",
+                        "id": "602c50f9fd74967db0663861"
+                        },
+                        {
+                        "name": "Religión, Cultura y Sociedad",
+                        "id": "602c510ffd74967db0663936",
+                        "type": "group"
+                        }
+                    ],
+                    "updated": 1619412232
                     }
                 ],
-                "institution": [
+                "references_count": 33,
+                "references": [],
+                "citations_count": 24,
+                "citations_link": "/scholar?cites=5456751198436452068&as_sdt=2005&sciodt=0,5&hl=en&oe=ASCII",
+                "citations": [],
+                "topics": [
                     {
-                    "name": "University of Antioquia",
-                    "id": "60120afa4749273de6161883"
+                    "source": "lens",
+                    "topics": [
+                        "Ethnic group",
+                        "Sociology",
+                        "Ideology",
+                        "Sociocultural evolution",
+                        "Globalization",
+                        "Modernity",
+                        "Population",
+                        "Social science",
+                        "Shamanism",
+                        "Indigenous"
+                    ]
                     }
                 ]
-                }
-        @apiSuccessExample {json} Success-Response (data=production):
-            HTTP/1.1 200 OK
-            {
-                "data": [
+                },
+                {
+                "_id": "606a4c92aa884b9a1562e896",
+                "updated": 1617579154,
+                "source_checked": [
                     {
-                    "_id": "602ef7c2728ecc2d8e62d5d9",
-                    "updated": 1613690817,
+                    "source": "lens",
+                    "ts": 1617579154
+                    },
+                    {
+                    "source": "oadoi",
+                    "ts": 1617579154
+                    },
+                    {
+                    "source": "scholar",
+                    "ts": 1617579154
+                    }
+                ],
+                "publication_type": "journal article",
+                "titles": [
+                    {
+                    "title": "Lucha por el reconocimiento en los modelos de medición: el caso de la Universidad de Antioquia",
+                    "lang": "es"
+                    }
+                ],
+                "subtitle": "",
+                "abstract": "Este articulo aporta a la fundamentacion de una sociologia del conocimiento la recuperacion del concepto de lucha intersubjetiva por el reconocimiento. De forma paralela, expone algunos hallazgos de la fase empirico-cualitativa de la investigacion: Linea base para la construccion de indicadores de comunicacion del conocimiento en el area de ciencias sociales, humanidades y artes . En cuanto a la categoria teorica, los investigadores del area de Ciencias Sociales, Humanidades y Artes de la Universidad de Antioquia reclaman que sus disciplinas sean vistas como una forma particular de conocer . Adicionalmente, consideran que, tal como se encuentran configurados, el Sistema Nacional de Ciencia, Tecnologia e Innovacion (sncti) y el Sistema Universitario de Investigacion (sui) tienen una vision unidimensional del conocimiento.",
+                "keywords": [],
+                "start_page": 259,
+                "end_page": 281,
+                "volume": "14",
+                "issue": "34",
+                "date_published": 1512086400,
+                "year_published": 2017,
+                "languages": [],
+                "bibtex": "@article{pineres2017lucha,\n  title={Lucha por el reconocimiento en los modelos de medici{\\'o}n: el caso de la Universidad de Antioquia},\n  author={Pi{\\~n}eres Sus, Juan David and V{\\'e}lez Cuartas, Gabriel and Montes Sep{\\'u}lveda, Carolina},\n  journal={Andamios},\n  volume={14},\n  number={34},\n  pages={259--281},\n  year={2017},\n  publisher={Colegio de Humanidades y Ciencias Sociales, Universidad Aut{\\'o}noma de la~�}\n}\n",
+                "funding_organization": "",
+                "funding_details": "",
+                "is_open_access": true,
+                "open_access_status": "bronze",
+                "external_ids": [
+                    {
+                    "source": "lens",
+                    "id": "094-568-608-170-967"
+                    },
+                    {
+                    "source": "doi",
+                    "id": "10.29092/uacm.v14i34.589"
+                    },
+                    {
+                    "source": "magid",
+                    "id": "2780077950"
+                    },
+                    {
+                    "source": "scholar",
+                    "id": "692pv4hGPxwJ"
+                    }
+                ],
+                "urls": [],
+                "source": {
+                    "_id": "606a4c92aa884b9a1562e894",
+                    "source_checked": [
+                    {
+                        "source": "scholar",
+                        "date": 1619423437
+                    },
+                    {
+                        "source": "lens",
+                        "date": 1617579154
+                    },
+                    {
+                        "source": "scopus",
+                        "date": 1619423437
+                    },
+                    {
+                        "source": "wos",
+                        "date": 1619423437
+                    }
+                    ],
+                    "updated": 1619423437,
+                    "title": "Andamios",
+                    "type": "journal",
+                    "publisher": "Universidad Nacional Autonoma de Mexico",
+                    "institution": "",
+                    "institution_id": "",
+                    "country": "MX",
+                    "submission_charges": "",
+                    "submission_currency": "",
+                    "apc_charges": "",
+                    "apc_currency": "",
+                    "serials": [
+                    {
+                        "type": "pissn",
+                        "value": "18700063"
+                    }
+                    ],
+                    "abbreviations": [
+                    {
+                        "type": "unknown",
+                        "value": "Andamios"
+                    },
+                    {
+                        "type": "char",
+                        "value": "ANDAMIOS"
+                    }
+                    ],
+                    "subjects": {}
+                },
+                "author_count": 3,
+                "authors": [
+                    {
+                    "_id": "5fc7dd169a7d07412f6cd3b3",
+                    "full_name": "Juan David Piñeres Sus",
+                    "first_names": "Juan David",
+                    "last_names": "Piñeres Sus",
+                    "initials": "JD",
+                    "affiliations": [
+                        {
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
+                        "abbreviations": [],
+                        "types": [
+                            "Education"
+                        ],
+                        "relationships": [
+                            {
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
+                            "external_ids": [
+                                {
+                                "source": "grid",
+                                "value": "grid.413348.9"
+                                }
+                            ],
+                            "id": ""
+                            }
+                        ],
+                        "addresses": [
+                            {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO"
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
+                        ],
+                        "external_ids": [
+                            {
+                            "source": "grid",
+                            "value": "grid.412881.6"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100005278"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "2696975"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1258413"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
+                            }
+                        ],
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": [
+                            {
+                            "_id": "602c50d1fd74967db0663835",
+                            "name": "Facultad de Ciencias Sociales y Humanas",
+                            "abbreviations": [
+                                "FCSH"
+                            ],
+                            "type": "faculty",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": ""
+                                }
+                            ],
+                            "external_urls": [
+                                {
+                                "source": "website",
+                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/institucional/unidades-academicas/facultades/ciencias-sociales-humanas"
+                                }
+                            ],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c50f9fd74967db0663860",
+                            "name": "Departamento de Sicología",
+                            "abbreviations": [],
+                            "type": "department",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": ""
+                                }
+                            ],
+                            "external_urls": [],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c510ffd74967db0663919",
+                            "name": "Grupo de Investigación en Psicologia Cognitiva",
+                            "abbreviations": [],
+                            "type": "group",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": "grupopsicologiacognitiva@udea.edu.co"
+                                }
+                            ],
+                            "external_urls": [
+                                {
+                                "source": "website",
+                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/investigacion/grupos-investigacion/ciencias-sociales/psicologia-cognitiva"
+                                },
+                                {
+                                "source": "gruplac",
+                                "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000001824"
+                                }
+                            ],
+                            "external_ids": [
+                                {
+                                "source": "colciencias",
+                                "id": "COL0011447"
+                                }
+                            ],
+                            "keywords": [],
+                            "subjects": [
+                                {
+                                "source": "area_ocde",
+                                "subjects": [
+                                    "ciencias sociales"
+                                ]
+                                },
+                                {
+                                "source": "subarea_ocde",
+                                "subjects": [
+                                    "psicología"
+                                ]
+                                },
+                                {
+                                "source": "udea",
+                                "subjects": [
+                                    "ciencias sociales"
+                                ]
+                                },
+                                {
+                                "source": "gruplac",
+                                "subjects": [
+                                    "evolución y cognición",
+                                    "neuropsicologia y educación",
+                                    "perfiles cognitivos y psicometría",
+                                    "psicología cliníca y de la salud",
+                                    "cultura y cognición"
+                                ]
+                                }
+                            ]
+                            }
+                        ]
+                        }
+                    ],
+                    "keywords": [
+                        "historical-pedagogical anthropology",
+                        "bentham debate",
+                        "flood",
+                        "risk perception"
+                    ],
+                    "external_ids": [
+                        {
+                        "source": "orcid",
+                        "value": "0000-0003-1870-4113"
+                        },
+                        {
+                        "source": "scopus",
+                        "value": "57193865053"
+                        },
+                        {
+                        "source": "scholar",
+                        "value": "UepzjHwAAAAJ"
+                        },
+                        {
+                        "source": "scopus",
+                        "value": "57215416522"
+                        }
+                    ],
+                    "branches": [
+                        {
+                        "name": "Facultad de Ciencias Sociales y Humanas",
+                        "type": "faculty",
+                        "id": "602c50d1fd74967db0663835"
+                        },
+                        {
+                        "name": "Departamento de Sicología",
+                        "type": "department",
+                        "id": "602c50f9fd74967db0663860"
+                        },
+                        {
+                        "name": "Grupo de Investigación en Psicologia Cognitiva",
+                        "id": "602c510ffd74967db0663919",
+                        "type": "group"
+                        }
+                    ],
+                    "updated": 1619423437
+                    },
+                    {
+                    "_id": "5fc823a79a7d07412f6cd3c4",
+                    "full_name": "Gabriel Jaime Velez Cuartas",
+                    "first_names": "Gabriel Jaime",
+                    "last_names": "Velez Cuartas",
+                    "initials": "GJ",
+                    "affiliations": [
+                        {
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
+                        "abbreviations": [],
+                        "types": [
+                            "Education"
+                        ],
+                        "relationships": [
+                            {
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
+                            "external_ids": [
+                                {
+                                "source": "grid",
+                                "value": "grid.413348.9"
+                                }
+                            ],
+                            "id": ""
+                            }
+                        ],
+                        "addresses": [
+                            {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO"
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
+                        ],
+                        "external_ids": [
+                            {
+                            "source": "grid",
+                            "value": "grid.412881.6"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100005278"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "2696975"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1258413"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
+                            }
+                        ],
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": [
+                            {
+                            "_id": "602c50d1fd74967db0663835",
+                            "name": "Facultad de Ciencias Sociales y Humanas",
+                            "abbreviations": [
+                                "FCSH"
+                            ],
+                            "type": "faculty",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": ""
+                                }
+                            ],
+                            "external_urls": [
+                                {
+                                "source": "website",
+                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/institucional/unidades-academicas/facultades/ciencias-sociales-humanas"
+                                }
+                            ],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c50f9fd74967db0663861",
+                            "name": "Departamento de Sociología",
+                            "abbreviations": [],
+                            "type": "department",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": ""
+                                }
+                            ],
+                            "external_urls": [],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c510ffd74967db0663988",
+                            "name": "Redes y Actores Sociales",
+                            "abbreviations": [],
+                            "type": "group",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": "grupoaliado@udea.edu.co"
+                                }
+                            ],
+                            "external_urls": [
+                                {
+                                "source": "gruplac",
+                                "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000011521"
+                                },
+                                {
+                                "source": "scholar",
+                                "url": "https://scholar.google.com/citations?user=Zy-vPf0AAAAJ"
+                                }
+                            ],
+                            "external_ids": [
+                                {
+                                "source": "colciencias",
+                                "id": "COL0114177"
+                                },
+                                {
+                                "source": "bupp",
+                                "id": "ES84190016"
+                                }
+                            ],
+                            "keywords": [],
+                            "subjects": [
+                                {
+                                "source": "area_ocde",
+                                "subjects": [
+                                    "ciencias sociales"
+                                ]
+                                },
+                                {
+                                "source": "subarea_ocde",
+                                "subjects": [
+                                    "sociología"
+                                ]
+                                },
+                                {
+                                "source": "udea",
+                                "subjects": [
+                                    "ciencias sociales"
+                                ]
+                                },
+                                {
+                                "source": "gruplac",
+                                "subjects": [
+                                    "análisis de redes y capital social",
+                                    "estudios sociales de la ciencia y sociedad del conocimiento",
+                                    "precariedad, subjetividad y género",
+                                    "problemas rurales y ruralidades",
+                                    "redes de políticas públicas y acción colectiva",
+                                    "teoría sociológica relacional"
+                                ]
+                                }
+                            ]
+                            }
+                        ]
+                        }
+                    ],
+                    "keywords": [
+                        "invisible colleges",
+                        "intellectual property",
+                        "caribbean",
+                        "arts",
+                        "fight for acknowledgement",
+                        "humanities",
+                        "knowledge sociology",
+                        "science",
+                        "social sciences"
+                    ],
+                    "external_ids": [
+                        {
+                        "source": "orcid",
+                        "value": "0000-0003-2350-4650"
+                        },
+                        {
+                        "source": "scopus",
+                        "value": "56348967600"
+                        },
+                        {
+                        "source": "scholar",
+                        "value": "HcAnZ0MAAAAJ"
+                        },
+                        {
+                        "source": "scopus",
+                        "value": "57194502920"
+                        }
+                    ],
+                    "branches": [
+                        {
+                        "name": "Facultad de Ciencias Sociales y Humanas",
+                        "type": "faculty",
+                        "id": "602c50d1fd74967db0663835"
+                        },
+                        {
+                        "name": "Departamento de Sociología",
+                        "type": "department",
+                        "id": "602c50f9fd74967db0663861"
+                        },
+                        {
+                        "name": "Redes y Actores Sociales",
+                        "id": "602c510ffd74967db0663988",
+                        "type": "group"
+                        }
+                    ],
+                    "updated": 1619654364
+                    },
+                    {
+                    "_id": "606a4c92aa884b9a1562e895",
                     "source_checked": [
                         {
                         "source": "lens",
-                        "ts": 1613690817
+                        "date": 1617579154
                         },
                         {
                         "source": "scholar",
-                        "ts": 1613690817
-                        },
-                        {
-                        "source": "scholar",
-                        "ts": 1613690817
+                        "date": 1617579154
                         }
                     ],
-                    "publication_type": "journal article",
-                    "titles": [
-                        {
-                        "title": "Avaliação do co-digestão anaeróbia de lodo de esgotos locais com resíduos dos alimentos",
-                        "lang": "pt"
-                        }
-                    ],
-                    "subtitle": "",
-                    "abstract": "Resumo A digestao anaerobia e um processo muito utilizado para o tratamento dos lodos produzidos em estacoes de tratamento de esgoto, devido as suas vantagens tecnicas e economicas. Este artigo apresenta um estudo em que o co-digestao de lodo de esgotos com residuos de alimentos (RA) foi avaliado como uma estrategia para otimizar a digestao dos lodos. Foram realizados mono-digestao e co-digestao dos substratos em condicoes mesoflicas (35°C) utilizando reactores descontinuos. Os lodos utilizado foram: lodo primaria (LP), lodos secundario espessadas (LSE) e uma mistura de LP com LSE em 60:40 a base de solidos totais (LP:LSE). As co-digestoes foram realizadas utilizando diferentes proporcoes de misturas de substratos a base de solidos totais volateis: LP:RA=30:70, LP:RA=50:50, LP:RA=70:30 (LP+LSE):RA=70:30. A maxima producao de metano, 0,25LCH4/gSVadicionado, foi obtido por mistura de LP:RA=30:70, apresentando uma producao 32% maior que a obtida no mono-digestao de lodo primario. Palabras-chave: co-digestao, producao de metano, lodo primaria, lodos secundario espessadas, residuos de alimentos.",
+                    "full_name": "Carolina Sepúlveda",
+                    "first_names": "Carolina",
+                    "last_names": "Sepúlveda",
+                    "initials": "C",
+                    "branches": [],
                     "keywords": [],
-                    "start_page": 63,
-                    "end_page": 70,
-                    "volume": "29",
-                    "issue": "1",
-                    "date_published": 1464739200,
-                    "year_published": 2016,
-                    "languages": [],
-                    "bibtex": "@article{julio2016evaluacion,\n  title={Evaluaci{\\'o}n de la co-digesti{\\'o}n anaerobia de lodos de aguas residuales municipales con residuos de alimentos},\n  author={Julio Guerrero, Ileana Consuelo and Pel{\\'a}ez Jaramillo, Carlos Alberto and Molina Perez, Francisco Jos{\\'e}},\n  journal={Revista ion},\n  volume={29},\n  number={1},\n  pages={63--70},\n  year={2016}\n}\n",
-                    "funding_organization": "",
-                    "funding_details": "",
-                    "is_open_access": true,
-                    "open_access_status": "gold",
-                    "external_ids": [
+                    "external_ids": [],
+                    "corresponding": false,
+                    "corresponding_address": "",
+                    "corresponding_email": "",
+                    "updated": 1619614750,
+                    "affiliations": [
                         {
-                        "source": "lens",
-                        "id": "006-555-275-310-954"
-                        },
-                        {
-                        "source": "magid",
-                        "id": "2586352813"
-                        },
-                        {
-                        "source": "doi",
-                        "id": "10.18273/revion.v29n1-2016005"
-                        },
-                        {
-                        "source": "scholar",
-                        "id": "98gk4Pc-DLYJ"
-                        }
-                    ],
-                    "urls": [],
-                    "source": {
-                        "_id": "600f50281fc9947fc8a8e80b",
-                        "updated": 1611616296,
-                        "source_checked": [
-                        {
-                            "source": "doaj",
-                            "ts": 1611616296
-                        }
-                        ],
-                        "title": "Revista Ion",
-                        "type": "",
-                        "publisher": "Universidad Industrial de Santander",
-                        "institution": "",
-                        "institution_id": "",
-                        "external_urls": [
-                        {
-                            "source": "site",
-                            "url": "http://revistas.uis.edu.co/index.php/revistaion/index"
-                        }
-                        ],
-                        "country": "CO",
-                        "editorial_review": "Blind peer review",
-                        "submission_charges": "",
-                        "submission_charges_url": "",
-                        "submmission_currency": "",
-                        "apc_charges": "",
-                        "apc_currency": "",
-                        "apc_url": "",
-                        "serials": [
-                        {
-                            "type": "pissn",
-                            "value": "0120100X"
-                        },
-                        {
-                            "type": "eissn",
-                            "value": "21458480"
-                        }
-                        ],
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
                         "abbreviations": [],
-                        "aliases": [],
-                        "subjects": [
-                        {
-                            "code": "Q",
-                            "scheme": "LCC",
-                            "term": "Science"
-                        },
-                        {
-                            "code": "QD1-999",
-                            "scheme": "LCC",
-                            "term": "Chemistry"
-                        }
+                        "types": [
+                            "Education"
                         ],
-                        "keywords": [
-                        "fuels and biofuels",
-                        "engineering",
-                        "materials science",
-                        "chemical and physics science",
-                        "bioprocess and green technologies"
-                        ],
-                        "author_copyright": "False",
-                        "license": [
-                        {
-                            "embedded_example_url": "",
-                            "NC": false,
-                            "ND": false,
-                            "BY": true,
-                            "open_access": true,
-                            "title": "CC BY",
-                            "type": "CC BY",
-                            "embedded": false,
-                            "url": "http://revistas.uis.edu.co/index.php/revistaion/about/editorialPolicies#openAccessPolicy",
-                            "SA": false
-                        }
-                        ],
-                        "languages": [
-                        "EN",
-                        "PT",
-                        "ES"
-                        ],
-                        "plagiarism_detection": true,
-                        "active": "",
-                        "publication_time": 24,
-                        "deposit_policies": ""
-                    },
-                    "author_count": 3,
-                    "authors": [
-                        {
-                        "_id": "602ef7c2728ecc2d8e62d5d8",
-                        "national_id": "",
-                        "source_checked": [
+                        "relationships": [
                             {
-                            "source": "lens",
-                            "date": 1613690817
-                            },
-                            {
-                            "source": "scholar",
-                            "date": 1613690817
-                            }
-                        ],
-                        "full_name": "Ileana Consuelo Julio Guerrero",
-                        "first_names": "Ileana Consuelo Julio",
-                        "last_names": "Guerrero",
-                        "initials": "ICJ",
-                        "branches": [],
-                        "keywords": [],
-                        "external_ids": [
-                            {
-                            "source": "scholar",
-                            "value": "2BFy8QIAAAAJ"
-                            }
-                        ],
-                        "corresponding": false,
-                        "corresponding_address": "",
-                        "corresponding_email": "",
-                        "updated": 1613690817,
-                        "affiliations": [
-                            {
-                            "_id": "60120afa4749273de6161883",
-                            "name": "University of Antioquia",
-                            "abbreviations": [],
-                            "types": [
-                                "Education"
-                            ],
-                            "relationships": [
-                                {
-                                "name": "Hôpital Saint-Vincent-de-Paul",
-                                "type": "Related",
-                                "external_ids": [
-                                    {
-                                    "source": "grid",
-                                    "value": "grid.413348.9"
-                                    }
-                                ],
-                                "id": ""
-                                }
-                            ],
-                            "addresses": [
-                                {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO"
-                                }
-                            ],
-                            "external_urls": [
-                                {
-                                "source": "wikipedia",
-                                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
-                                },
-                                {
-                                "source": "site",
-                                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
-                                }
-                            ],
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
                             "external_ids": [
                                 {
                                 "source": "grid",
-                                "value": "grid.412881.6"
-                                },
-                                {
-                                "source": "isni",
-                                "value": "0000 0000 8882 5269"
-                                },
-                                {
-                                "source": "fundref",
-                                "value": "501100005278"
-                                },
-                                {
-                                "source": "orgref",
-                                "value": "2696975"
-                                },
-                                {
-                                "source": "wikidata",
-                                "value": "Q1258413"
-                                },
-                                {
-                                "source": "ror",
-                                "value": "https://ror.org/03bp5hc83"
+                                "value": "grid.413348.9"
                                 }
                             ],
-                            "branches": []
-                            }
-                        ]
-                        },
-                        {
-                        "_id": "5fc75a099a7d07412f6cd38a",
-                        "national_id": 70561251,
-                        "full_name": "Carlos Alberto Pelaez Jaramillo",
-                        "first_names": "Carlos Alberto",
-                        "last_names": "Pelaez Jaramillo",
-                        "initials": "CA",
-                        "affiliations": [
-                            {
-                            "_id": "60120afa4749273de6161883",
-                            "name": "University of Antioquia",
-                            "abbreviations": [],
-                            "types": [
-                                "Education"
-                            ],
-                            "relationships": [
-                                {
-                                "name": "Hôpital Saint-Vincent-de-Paul",
-                                "type": "Related",
-                                "external_ids": [
-                                    {
-                                    "source": "grid",
-                                    "value": "grid.413348.9"
-                                    }
-                                ],
-                                "id": ""
-                                }
-                            ],
-                            "addresses": [
-                                {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO"
-                                }
-                            ],
-                            "external_urls": [
-                                {
-                                "source": "wikipedia",
-                                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
-                                },
-                                {
-                                "source": "site",
-                                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
-                                }
-                            ],
-                            "external_ids": [
-                                {
-                                "source": "grid",
-                                "value": "grid.412881.6"
-                                },
-                                {
-                                "source": "isni",
-                                "value": "0000 0000 8882 5269"
-                                },
-                                {
-                                "source": "fundref",
-                                "value": "501100005278"
-                                },
-                                {
-                                "source": "orgref",
-                                "value": "2696975"
-                                },
-                                {
-                                "source": "wikidata",
-                                "value": "Q1258413"
-                                },
-                                {
-                                "source": "ror",
-                                "value": "https://ror.org/03bp5hc83"
-                                }
-                            ],
-                            "branches": [
-                                {
-                                "_id": "602c50d1fd74967db0663833",
-                                "name": "Facultad de ciencias exactas y naturales",
-                                "abbreviations": [
-                                    "FCEN"
-                                ],
-                                "type": "faculty",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c50f9fd74967db066385b",
-                                "name": "Instituto de química",
-                                "abbreviations": [],
-                                "type": "department",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c510ffd74967db066390f",
-                                "name": "Grupo interdisciplinario de estudios moleculares",
-                                "abbreviations": [],
-                                "type": "group",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": "laboratoriogiemudea@gmail.com"
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/investigacion/grupos-investigacion/ciencias-naturales-exactas/giem"
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000001876"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": [
-                                    {
-                                    "source": "area_ocde",
-                                    "subjects": [
-                                        "ciencias naturales"
-                                    ]
-                                    },
-                                    {
-                                    "source": "subarea_ocde",
-                                    "subjects": [
-                                        "ciencias químicas"
-                                    ]
-                                    },
-                                    {
-                                    "source": "udea",
-                                    "subjects": [
-                                        "ciencias exactas y naturales"
-                                    ]
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "subjects": [
-                                        "aprovechamiento energético y material de biomasa residual",
-                                        "bioensayos ",
-                                        "electroquímica",
-                                        "estudios agroecosistémicos",
-                                        "microbiología",
-                                        "productos naturales y formulación",
-                                        "servicios a la comunidad"
-                                    ]
-                                    }
-                                ]
-                                }
-                            ]
+                            "id": ""
                             }
                         ],
-                        "keywords": [
-                            "agriculture",
-                            "caffeine oleate",
-                            "insecticide",
-                            "o/w emulsion",
-                            "drosophila melanogaster",
-                            "hypothenemus hampei",
-                            "shell microstructure",
-                            "chitin",
-                            "chemical hydrolysis",
-                            "papain"
+                        "addresses": [
+                            {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO"
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
                         ],
                         "external_ids": [
                             {
-                            "source": "scopus",
-                            "value": "55496048500"
-                            }
-                        ],
-                        "branches": [
-                            {
-                            "name": "Facultad de Ciencias Exactas y Naturales",
-                            "type": "faculty",
-                            "id": "602c50d1fd74967db0663833"
+                            "source": "grid",
+                            "value": "grid.412881.6"
                             },
                             {
-                            "name": "Instituto de Química",
-                            "type": "department",
-                            "id": "602c50f9fd74967db066385b"
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
                             },
                             {
-                            "name": "Grupo Interdisciplinario de Estudios Moleculares",
-                            "type": "group",
-                            "id": "602c510ffd74967db066390f"
-                            }
-                        ],
-                        "updated": 1613691619
-                        },
-                        {
-                        "_id": "5fcbea95eccc163512fee506",
-                        "national_id": 3352862,
-                        "full_name": "Francisco Jose Molina Perez",
-                        "first_names": "Francisco Jose",
-                        "last_names": "Molina Perez",
-                        "initials": "FJ",
-                        "affiliations": [
-                            {
-                            "_id": "60120afa4749273de6161883",
-                            "name": "University of Antioquia",
-                            "abbreviations": [],
-                            "types": [
-                                "Education"
-                            ],
-                            "relationships": [
-                                {
-                                "name": "Hôpital Saint-Vincent-de-Paul",
-                                "type": "Related",
-                                "external_ids": [
-                                    {
-                                    "source": "grid",
-                                    "value": "grid.413348.9"
-                                    }
-                                ],
-                                "id": ""
-                                }
-                            ],
-                            "addresses": [
-                                {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO"
-                                }
-                            ],
-                            "external_urls": [
-                                {
-                                "source": "wikipedia",
-                                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
-                                },
-                                {
-                                "source": "site",
-                                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
-                                }
-                            ],
-                            "external_ids": [
-                                {
-                                "source": "grid",
-                                "value": "grid.412881.6"
-                                },
-                                {
-                                "source": "isni",
-                                "value": "0000 0000 8882 5269"
-                                },
-                                {
-                                "source": "fundref",
-                                "value": "501100005278"
-                                },
-                                {
-                                "source": "orgref",
-                                "value": "2696975"
-                                },
-                                {
-                                "source": "wikidata",
-                                "value": "Q1258413"
-                                },
-                                {
-                                "source": "ror",
-                                "value": "https://ror.org/03bp5hc83"
-                                }
-                            ],
-                            "branches": [
-                                {
-                                "_id": "602c50d1fd74967db066383a",
-                                "name": "Facultad de ingeniería",
-                                "abbreviations": [],
-                                "type": "faculty",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ingenieria"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c50f9fd74967db0663886",
-                                "name": "Departamento de ingeniería sanitaria  y ambiental",
-                                "abbreviations": [],
-                                "type": "department",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c510ffd74967db0663956",
-                                "name": "Grupo de investigación en gestión y modelación ambiental",
-                                "abbreviations": [
-                                    "GAIA"
-                                ],
-                                "type": "group",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": "grupogaia@udea.edu.co"
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/investigacion/grupos-investigacion/ciencias-naturales-exactas/gaia"
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000008106"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": [
-                                    {
-                                    "source": "area_ocde",
-                                    "subjects": [
-                                        "ciencias naturales"
-                                    ]
-                                    },
-                                    {
-                                    "source": "subarea_ocde",
-                                    "subjects": [
-                                        "ciencias de la tierra y medioambientales"
-                                    ]
-                                    },
-                                    {
-                                    "source": "udea",
-                                    "subjects": [
-                                        "ingeniería"
-                                    ]
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "subjects": [
-                                        "ecología de ecosistemas acuáticos costeros",
-                                        "ecotoxicología acuática",
-                                        "geología, geomorfología, hidrología, suelos y paleoecologia",
-                                        "limnología básica y aplicada",
-                                        "microbiología ambiental y aplicada",
-                                        "modelación de sistemas ambientales",
-                                        "tratamiento biológico de residuos y aguas residuales"
-                                    ]
-                                    }
-                                ]
-                                }
-                            ]
-                            }
-                        ],
-                        "keywords": [
-                            "landfill leachate",
-                            "fenton oxidation",
-                            "phylogeny"
-                        ],
-                        "external_ids": [
-                            {
-                            "source": "orcid",
-                            "value": "0000-0002-3491-4586"
+                            "source": "fundref",
+                            "value": "501100005278"
                             },
                             {
-                            "source": "scopus",
-                            "value": "8437667900"
-                            }
-                        ],
-                        "branches": [
-                            {
-                            "name": "Facultad de Ingeniería",
-                            "type": "faculty",
-                            "id": "602c50d1fd74967db066383a"
+                            "source": "orgref",
+                            "value": "2696975"
                             },
                             {
-                            "name": "Departamento de Ingeniería Sanitaria  y Ambiental",
-                            "type": "department",
-                            "id": "602c50f9fd74967db0663886"
+                            "source": "wikidata",
+                            "value": "Q1258413"
                             },
                             {
-                            "name": "Grupo de Investigación en Gestión y Modelación Ambiental (GAIA)",
-                            "type": "group",
-                            "id": "602c510ffd74967db0663956"
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
                             }
                         ],
-                        "updated": 1613690818
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": []
                         }
-                    ],
-                    "references_count": "",
-                    "references": [],
-                    "citations_count": 5,
-                    "citations_link": "/scholar?cites=13117929048961763575&as_sdt=2005&sciodt=0,5&hl=en&oe=ASCII",
-                    "citations": []
+                    ]
                     }
                 ],
-                "count": 82,
-                "page": 1,
-                "total_results": 82
+                "references_count": "",
+                "references": [],
+                "citations_count": 4,
+                "citations_link": "/scholar?cites=2035423109739830763&as_sdt=2005&sciodt=0,5&hl=en&oe=ASCII",
+                "citations": [],
+                "topics": [
+                    {
+                    "source": "lens",
+                    "topics": [
+                        "Sociology",
+                        "Humanities",
+                        "Linea",
+                        "Social science"
+                    ]
+                    }
+                ]
                 }
+            ],
+            "count": 100,
+            "page": 1,
+            "total_results": 389
+        }
         """
         data = self.request.args.get('data')
         if not self.valid_apikey():

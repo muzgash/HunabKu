@@ -25,13 +25,13 @@ class ColavAuthorsApi(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.id":ObjectId(idx)})
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.id":ObjectId(idx)})
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)})
             else:
-                cursor=self.db['documents'].find({"authors._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"authors.id":ObjectId(idx)})
         else:
             cursor=self.db['documents'].find()
 
@@ -66,25 +66,25 @@ class ColavAuthorsApi(HunabkuPluginBase):
 
         for paper in cursor:
             entry=paper
-            source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
             if source:
                 entry["source"]=source
             authors=[]
             for author in paper["authors"]:
                 au_entry=author
-                author_db=self.db["authors"].find_one({"_id":author["_id"]})
+                author_db=self.db["authors"].find_one({"_id":author["id"]})
                 if author_db:
                     au_entry=author_db
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry=aff
-                    aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
+                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
                         aff_entry=aff_db
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
-                            branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
+                            branch_db=self.db["branches"].find_one({"_id":branch["id"]}) if "id" in branch.keys() else ""
                             if branch_db:
                                 branches.append(branch_db)
                     aff_entry["branches"]=branches
@@ -171,41 +171,44 @@ class ColavAuthorsApi(HunabkuPluginBase):
 
         @apiSuccessExample {json} Success-Response (data=info):
         {
-            "id": "5fc66fdfb246cc0887190aa6",
-            "full_name": "Diego Alejandro Restrepo Quintero",
-            "affiliation": {
+            "id": "5fc704b99a7d07412f6cd375",
+            "full_name": "Gabriel De Jesus Bedoya Berrio",
+            "institution": {
                 "id": "60120afa4749273de6161883",
-                "name": "University of Antioquia"
+                "name": "Universidad de Antioquia"
             },
             "country": "Colombia",
-            "country_code": "CO",
             "faculty": {
                 "name": "Facultad de Ciencias Exactas y Naturales",
                 "type": "faculty",
                 "id": "602c50d1fd74967db0663833"
             },
             "department": {
-                "name": "Instituto de Física",
+                "name": "Instituto de Biología",
                 "type": "department",
-                "id": "602c50f9fd74967db0663859"
+                "id": "602c50f9fd74967db066385a"
             },
             "group": {
-                "name": "Grupo de Fenomenologia de Interacciones Fundamentales",
-                "type": "group",
-                "id": "602c510ffd74967db06638f9"
+                "name": "Genética Molecular",
+                "id": "602c510ffd74967db06638fa",
+                "type": "group"
             },
             "external_urls": [
                 {
                 "source": "scopus",
-                "url": "https://www.scopus.com/authid/detail.uri?authorId=7005721136"
+                "url": "https://www.scopus.com/authid/detail.uri?authorId=6602127921"
                 },
                 {
-                "source": "orcid",
-                "url": "https://orcid.org/0000-0001-6455-5564"
+                "source": "scholar",
+                "url": "https://scholar.google.com.co/citations?user=FhJ_shsAAAAJ"
                 },
                 {
                 "source": "researcherid",
-                "url": "https://publons.com/researcher/E-6977-2013"
+                "url": "https://publons.com/researcher/E-6042-2012"
+                },
+                {
+                "source": "orcid",
+                "url": "https://orcid.org/0000-0002-0630-027X"
                 }
             ]
         }

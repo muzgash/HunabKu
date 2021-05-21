@@ -25,13 +25,13 @@ class ColavDepartmentsApi(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.branches.id":ObjectId(idx)})
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.branches.id":ObjectId(idx)})
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.branches.id":ObjectId(idx)})
             else:
-                cursor=self.db['documents'].find({"authors.affiliations.branches._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"authors.affiliations.branches.id":ObjectId(idx)})
         else:
             cursor=self.db['documents'].find()
 
@@ -68,18 +68,13 @@ class ColavDepartmentsApi(HunabkuPluginBase):
 
         for paper in cursor:
             entry=paper
-            del(entry["abstract_idx"])
-            for title in entry["titles"]:
-                del(title["title_idx"])
-            source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
             if source:
-                del(source["title_idx"])
-                del(source["publisher_idx"])
                 entry["source"]=source
             authors=[]
             for author in paper["authors"]:
                 au_entry=author
-                author_db=self.db["authors"].find_one({"_id":author["_id"]})
+                author_db=self.db["authors"].find_one({"_id":author["id"]})
                 if author_db:
                     au_entry=author_db
                 if "aliases" in au_entry.keys():
@@ -89,11 +84,9 @@ class ColavDepartmentsApi(HunabkuPluginBase):
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry=aff
-                    aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
+                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
                         aff_entry=aff_db
-                    if "name_idx" in aff_entry.keys():
-                        del(aff_entry["name_idx"])
                     if "addresses" in aff_entry.keys():
                         for add in aff_entry["addresses"]:
                             if "geonames_city" in add.keys():
@@ -103,10 +96,9 @@ class ColavDepartmentsApi(HunabkuPluginBase):
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
-                            branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
+                            branch_db=self.db["branches"].find_one({"_id":branch["id"]}) if "id" in branch.keys() else ""
                             if branch_db:
                                 del(branch_db["aliases"])
-                                del(branch_db["name_idx"])
                                 if "addresses" in branch_db.keys():
                                     for add in branch_db["addresses"]:
                                         del(add["geonames_city"])
@@ -185,236 +177,646 @@ class ColavDepartmentsApi(HunabkuPluginBase):
         @apiError (Error 200) msg  The HTTP 200 OK.
 
         @apiSuccessExample {json} Success-Response (data=info):
-            HTTP/1.1 200 OK
-            {
-                "id": "602c50d1fd74967db0663833",
-                "name": "Facultad de ciencias exactas y naturales",
-                "type": "faculty",
-                "external_urls": [
+        HTTP/1.1 200 OK
+        {
+            "id": "602c50f9fd74967db0663859",
+            "name": "Instituto de Física",
+            "type": "department",
+            "external_urls": [],
+            "groups": [
+                {
+                "id": "602c510ffd74967db06638f9",
+                "name": "Grupo de Fenomenologia de Interacciones Fundamentales"
+                },
+                {
+                "id": "602c510ffd74967db06639e1",
+                "name": "Grupo de Fisica y Astrofisica Computacional"
+                },
+                {
+                "id": "602c510ffd74967db06638f3",
+                "name": "Grupo de Biofísica"
+                },
+                {
+                "id": "602c510ffd74967db06638fb",
+                "name": "Grupo de Fisica Atomica y Molecular"
+                },
+                {
+                "id": "602c510ffd74967db06638e9",
+                "name": "Fisica Industrial y de la Radiación"
+                },
+                {
+                "id": "602c510ffd74967db0663912",
+                "name": "Grupo de Fisica Nuclear"
+                },
+                {
+                "id": "602c510ffd74967db0663a15",
+                "name": "Grupo Teórico de Ciencias de los Materiales"
+                }
+            ],
+            "authors": [
+                {
+                "full_name": "Oscar Alberto Zapata Noreña",
+                "id": "5fc5ccb8b246cc0887190a81"
+                },
+                {
+                "full_name": "Nelson Vanegas Arbelaez",
+                "id": "5fc6287fb246cc0887190a94"
+                },
+                {
+                "full_name": "John Jairo Zuluaga Quintero",
+                "id": "5fc62920b246cc0887190a95"
+                },
+                {
+                "full_name": "Jorge Ivan Zuluaga Callejas",
+                "id": "5fc62b22b246cc0887190a96"
+                },
+                {
+                "full_name": "Johann Mazo Zuluaga",
+                "id": "5fc630ecb246cc0887190a97"
+                },
+                {
+                "full_name": "Oscar Antonio Restrepo Gutierrez",
+                "id": "5fc63219b246cc0887190a98"
+                },
+                {
+                "full_name": "Juan Jose Quiros Arroyave",
+                "id": "5fc63262b246cc0887190a99"
+                },
+                {
+                "full_name": "John Fredy Barrera Ramirez",
+                "id": "5fc639fcb246cc0887190a9a"
+                },
+                {
+                "full_name": "Marco Antonio Giraldo Cadavid",
+                "id": "5fc63b37b246cc0887190a9b"
+                },
+                {
+                "full_name": "Oscar Luis Arnache Olmos",
+                "id": "5fc6433fb246cc0887190a9c"
+                },
+                {
+                "full_name": "Boris Anghelo Rodriguez Rey",
+                "id": "5fc6487fb246cc0887190a9d"
+                },
+                {
+                "full_name": "Alvaro Luis Morales Aramburo",
+                "id": "5fc65665b246cc0887190a9e"
+                },
+                {
+                "full_name": "Jorge Eduardo Mahecha Gomez",
+                "id": "5fc65863b246cc0887190a9f"
+                },
+                {
+                "full_name": "Leonardo Augusto Pachon Contreras",
+                "id": "5fc65b6fb246cc0887190aa1"
+                },
+                {
+                "full_name": "Cesar Augusto Barrero Meneses",
+                "id": "5fc662f1b246cc0887190aa2"
+                },
+                {
+                "full_name": "Jose Patricio Valencia Valencia",
+                "id": "5fc6632db246cc0887190aa3"
+                },
+                {
+                "full_name": "Jaime Alberto Osorio Velez",
+                "id": "5fc668b8b246cc0887190aa4"
+                },
+                {
+                "full_name": "Jorge Mario Osorio Guillen",
+                "id": "5fc66debb246cc0887190aa5"
+                },
+                {
+                "full_name": "Diego Alejandro Restrepo Quintero",
+                "id": "5fc66fdfb246cc0887190aa6"
+                },
+                {
+                "full_name": "Edgar Alberto Rueda Munoz",
+                "id": "5fc671d0b246cc0887190aa7"
+                },
+                {
+                "full_name": "Esteban Silva Villa",
+                "id": "5fc673a6b246cc0887190aa8"
+                }
+            ],
+            "institution": [
+                {
+                "name": "Universidad de Antioquia",
+                "id": "60120afa4749273de6161883",
+                "logo": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg"
+                }
+            ]
+        }
+        @apiSuccessExample {json} Success-Response (data=production):
+        HTTP/1.1 200 OK
+        {
+            "data": [
+                {
+                "_id": "606a4c54aa884b9a1562e1b7",
+                "updated": 1617579091,
+                "source_checked": [
                     {
-                    "source": "website",
-                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                    }
-                ],
-                "departments": [
-                    {
-                    "id": "602c50f9fd74967db0663858",
-                    "name": "Instituto de matemáticas"
-                    }
-                ],
-                "groups": [
-                    {
-                    "id": "602c510ffd74967db06639a7",
-                    "name": "Modelación con ecuaciones diferenciales"
+                    "source": "lens",
+                    "ts": 1617579080
                     },
                     {
-                    "id": "602c510ffd74967db06639ad",
-                    "name": "álgebra u de a"
+                    "source": "wos",
+                    "ts": 1617579085
+                    },
+                    {
+                    "source": "oadoi",
+                    "ts": 1617579091
+                    },
+                    {
+                    "source": "scholar",
+                    "ts": 1617579091
+                    },
+                    {
+                    "source": "scopus",
+                    "ts": 1617579091
                     }
                 ],
+                "publication_type": "journal article",
+                "titles": [
+                    {
+                    "title": "Density operator of a system pumped with polaritons: a Jaynes-Cummings-like approach.",
+                    "lang": "en"
+                    }
+                ],
+                "subtitle": "",
+                "abstract": "We investigate the effects of considering two different incoherent excitation mechanisms on microcavity quantum dot systems modeled using the Jaynes-Cummings Hamiltonian. When the system is incoherently pumped with polaritons it is able to sustain a large number of photons inside the cavity with Poisson-like statistics in the stationary limit, and it also leads to a separable exciton-photon state. We also investigate the effects of both types of pumpings (excitonic and polaritonic) in the emission spectrum of the cavity. We show that the polaritonic pumping considered here is unable to modify the dynamical regimes of the system at variance with the excitonic pumping. Finally, we obtain a closed form expression for the negativity of the density matrices that the quantum master equation considered here generates.",
+                "keywords": [
+                    "closed-form expression",
+                    "density matrix",
+                    "density operators",
+                    "dynamical regime",
+                    "emission spectrums",
+                    "excitation mechanisms",
+                    "jaynes-cummings",
+                    "jaynes-cummings hamiltonian",
+                    "photon state",
+                    "polaritons",
+                    "quantum dot",
+                    "photons",
+                    "quantum dots"
+                ],
+                "start_page": 25301,
+                "end_page": "",
+                "volume": "23",
+                "issue": "2",
+                "date_published": 1291852800,
+                "year_published": 2010,
+                "languages": [
+                    "en"
+                ],
+                "bibtex": "@article{quesada2010density,\n  title={Density operator of a system pumped with polaritons: a Jaynes--Cummings-like approach},\n  author={Quesada, Nicol{\\'a}s and Vinck-Posada, Herbert and Rodr{\\'\\i}guez, Boris A},\n  journal={Journal of Physics: Condensed Matter},\n  volume={23},\n  number={2},\n  pages={025301},\n  year={2010},\n  publisher={IOP Publishing}\n}\n",
+                "funding_organization": "",
+                "funding_details": "",
+                "is_open_access": true,
+                "open_access_status": "green",
+                "external_ids": [
+                    {
+                    "source": "lens",
+                    "id": "117-523-410-768-967"
+                    },
+                    {
+                    "source": "magid",
+                    "id": "2032078246"
+                    },
+                    {
+                    "source": "doi",
+                    "id": "10.1088/0953-8984/23/2/025301"
+                    },
+                    {
+                    "source": "pmid",
+                    "id": "21406838"
+                    },
+                    {
+                    "source": "wos",
+                    "id": "000285190900005"
+                    },
+                    {
+                    "source": "scopus",
+                    "id": "2-s2.0-78651479995"
+                    },
+                    {
+                    "source": "scholar",
+                    "id": "u9ICMr0fD2gJ"
+                    }
+                ],
+                "urls": [
+                    {
+                    "source": "scopus",
+                    "url": "https://www.scopus.com/inward/record.uri?eid=2-s2.0-78651479995&doi=10.1088%2f0953-8984%2f23%2f2%2f025301&partnerID=40&md5=1977625c6ebc93ed23e526ee5690405d"
+                    }
+                ],
+                "source": {
+                    "_id": "606a4c54aa884b9a1562e1b4",
+                    "source_checked": [
+                    {
+                        "source": "scopus",
+                        "date": 1617579091
+                    },
+                    {
+                        "source": "wos",
+                        "date": 1617579091
+                    },
+                    {
+                        "source": "scholar",
+                        "date": 1617579091
+                    },
+                    {
+                        "source": "lens",
+                        "date": 1617579091
+                    }
+                    ],
+                    "updated": 1617579091,
+                    "title": "Journal of Physics: Condensed Matter",
+                    "type": "journal",
+                    "publisher": "IOP Publishing Ltd.",
+                    "institution": "",
+                    "institution_id": "",
+                    "country": "GB",
+                    "submission_charges": "",
+                    "submission_currency": "",
+                    "apc_charges": "",
+                    "apc_currency": "",
+                    "serials": [
+                    {
+                        "type": "unknown",
+                        "value": "09538984"
+                    },
+                    {
+                        "type": "coden",
+                        "value": "JCOME"
+                    },
+                    {
+                        "type": "eissn",
+                        "value": "1361648X"
+                    }
+                    ],
+                    "abbreviations": [
+                    {
+                        "type": "unknown",
+                        "value": "J Phys Condens Matter"
+                    },
+                    {
+                        "type": "char",
+                        "value": "J PHYS-CONDENS MAT"
+                    },
+                    {
+                        "type": "iso",
+                        "value": "J. Phys.-Condes. Matter"
+                    }
+                    ],
+                    "subjects": {}
+                },
+                "author_count": 3,
                 "authors": [
                     {
-                    "full_name": "Roberto Cruz Rodes",
-                    "id": "5fc5a419b246cc0887190a64"
-                    },
-                    {
-                    "full_name": "Jairo Eloy Castellanos Ramos",
-                    "id": "5fc5a4b7b246cc0887190a65"
-                    }
-                ],
-                "institution": [
-                    {
-                    "name": "University of Antioquia",
-                    "id": "60120afa4749273de6161883"
-                    }
-                ]
-                }
-        @apiSuccessExample {json} Success-Response (data=production):
-            HTTP/1.1 200 OK
-            {
-                "data": [
-                    {
-                    "_id": "602ef800728ecc2d8e62d704",
-                    "updated": 1613690880,
+                    "_id": "606a4c54aa884b9a1562e1b5",
                     "source_checked": [
                         {
                         "source": "lens",
-                        "ts": 1613690880
+                        "date": 1617579091
                         },
                         {
-                        "source": "scholar",
-                        "ts": 1613690880
-                        },
-                        {
-                        "source": "scholar",
-                        "ts": 1613690880
+                        "source": "wos",
+                        "date": 1617579091
                         },
                         {
                         "source": "scopus",
-                        "ts": 1613690880
-                        }
-                    ],
-                    "publication_type": "conference proceedings",
-                    "titles": [
+                        "date": 1617579091
+                        },
                         {
-                        "title": "Personalized message emission in a mobile application for supporting therapeutic adherence",
-                        "lang": "en"
+                        "source": "scholar",
+                        "date": 1617579091
                         }
                     ],
-                    "subtitle": "",
-                    "abstract": "Often chronic patients fail to follow all the recommendations in their treatments. This affects their health and increases the costs associated with their care. To help these patients to follow their therapy this paper proposes a recall and guide system implemented on a mobile device. The system emits custom messages according to the patient's inferred mental state with the intention of persuading him to adhere to his medical prescriptions. To achieve personalization, the system uses ontologies to classify the messages and to model the user. When it is necessary to issue a reminder, the selection of the message is obtained by querying the relationships between the patient's current model and the discourse ontology.",
-                    "keywords": [
-                        "current models",
-                        "guide system",
-                        "medical prescription",
-                        "mental state",
-                        "mobile applications",
-                        "personalizations",
-                        "personalized messages",
-                        "system use",
-                        "therapeutic adherence",
-                        "health",
-                        "ontology",
-                        "patient treatment",
-                        "mobile devices"
-                    ],
-                    "start_page": 15,
-                    "end_page": 20,
-                    "volume": "",
-                    "issue": "",
-                    "date_published": 1307923200,
-                    "year_published": 2011,
-                    "languages": [
-                        "en"
-                    ],
-                    "bibtex": "@inproceedings{uribe2011personalized,\n  title={Personalized message emission in a mobile application for supporting therapeutic adherence},\n  author={Uribe, Jonny A and Duitama, Jhon F and G{\\'o}mez, Natalia Gaviria},\n  booktitle={2011 IEEE 13th International Conference on e-Health Networking, Applications and Services},\n  pages={15--20},\n  year={2011},\n  organization={IEEE}\n}\n",
-                    "funding_organization": "",
-                    "funding_details": "",
-                    "is_open_access": false,
-                    "open_access_status": "closed",
+                    "full_name": "Nicolás Quesada",
+                    "first_names": "Nicolás",
+                    "last_names": "Quesada",
+                    "initials": "N",
+                    "branches": [],
+                    "keywords": [],
                     "external_ids": [
                         {
-                        "source": "lens",
-                        "id": "164-785-598-339-308"
-                        },
-                        {
-                        "source": "magid",
-                        "id": "2127102153"
-                        },
-                        {
-                        "source": "doi",
-                        "id": "10.1109/health.2011.6026734"
-                        },
-                        {
                         "source": "scopus",
-                        "id": "2-s2.0-80053939280"
+                        "value": "36521642400"
                         },
                         {
                         "source": "scholar",
-                        "id": "7zd6q123OScJ"
-                        }
-                    ],
-                    "urls": [
+                        "value": "dZNVjOEAAAAJ"
+                        },
                         {
                         "source": "scopus",
-                        "url": "https://www.scopus.com/inward/record.uri?eid=2-s2.0-80053939280&doi=10.1109%2fHEALTH.2011.6026734&partnerID=40&md5=a91b2ede798cc229f82ec843b786148a"
+                        "value": "35071924300"
                         }
                     ],
-                    "source": {
-                        "_id": "602ef800728ecc2d8e62d702",
-                        "source_checked": [
+                    "corresponding": true,
+                    "corresponding_address": "Instituto de Física, Universidad de Antioquia, Medellín, A A 1226 Medellín, Colombia",
+                    "corresponding_email": "nquesada@pegasus.udea.edu.co",
+                    "updated": 1619654988,
+                    "affiliations": [
                         {
-                            "source": "scopus",
-                            "date": 1613690880
-                        },
-                        {
-                            "source": "scholar",
-                            "date": 1613690880
-                        },
-                        {
-                            "source": "lens",
-                            "date": 1613690880
-                        }
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
+                        "abbreviations": [],
+                        "types": [
+                            "Education"
                         ],
-                        "updated": 1613690880,
-                        "title": "2011 IEEE 13th International Conference on e-Health Networking, Applications and Services",
-                        "type": "",
-                        "publisher": "IEEE",
-                        "institution": "",
-                        "institution_id": "",
-                        "country": "",
-                        "submission_charges": "",
-                        "submission_currency": "",
-                        "apc_charges": "",
-                        "apc_currency": "",
-                        "serials": [
-                        {
-                            "type": "isbn",
-                            "value": "9781612846972"
-                        }
-                        ],
-                        "abbreviations": [
-                        {
-                            "type": "unknown",
-                            "value": "IEEE Int. Conf. e-Health Networking, Appl. Serv., HEALTHCOM"
-                        }
-                        ],
-                        "subjects": {}
-                    },
-                    "author_count": 3,
-                    "authors": [
-                        {
-                        "_id": "602ef800728ecc2d8e62d703",
-                        "national_id": "",
-                        "source_checked": [
+                        "relationships": [
                             {
-                            "source": "lens",
-                            "date": 1613690880
-                            },
-                            {
-                            "source": "scopus",
-                            "date": 1613690880
-                            },
-                            {
-                            "source": "scholar",
-                            "date": 1613690880
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
+                            "external_ids": [
+                                {
+                                "source": "grid",
+                                "value": "grid.413348.9"
+                                }
+                            ],
+                            "id": ""
                             }
                         ],
-                        "full_name": "Jonny A. Uribe",
-                        "first_names": "Jonny A.",
-                        "last_names": "Uribe",
-                        "initials": "JA",
-                        "branches": [],
-                        "keywords": [],
+                        "addresses": [
+                            {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO"
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
+                        ],
                         "external_ids": [
                             {
-                            "source": "scholar",
-                            "value": "H4vqviEAAAAJ"
+                            "source": "grid",
+                            "value": "grid.412881.6"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100005278"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "2696975"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1258413"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
                             }
                         ],
-                        "corresponding": false,
-                        "corresponding_address": "",
-                        "corresponding_email": "",
-                        "updated": 1613690880,
-                        "affiliations": [
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": []
+                        }
+                    ]
+                    },
+                    {
+                    "_id": "606a4c54aa884b9a1562e1b6",
+                    "source_checked": [
+                        {
+                        "source": "lens",
+                        "date": 1617579091
+                        },
+                        {
+                        "source": "wos",
+                        "date": 1617579091
+                        },
+                        {
+                        "source": "scopus",
+                        "date": 1617579091
+                        },
+                        {
+                        "source": "scholar",
+                        "date": 1617579091
+                        }
+                    ],
+                    "full_name": "Herbert Vinck-Posada",
+                    "first_names": "Herbert",
+                    "last_names": "Vinck-Posada",
+                    "initials": "H",
+                    "branches": [],
+                    "keywords": [],
+                    "external_ids": [
+                        {
+                        "source": "scopus",
+                        "value": "8357224800"
+                        },
+                        {
+                        "source": "scholar",
+                        "value": "PrGy6_IAAAAJ"
+                        },
+                        {
+                        "source": "researchid",
+                        "value": "P-7202-2016"
+                        },
+                        {
+                        "source": "orcid",
+                        "value": "0000-0002-5727-8025"
+                        },
+                        {
+                        "source": "scopus",
+                        "value": "36888027400"
+                        },
+                        {
+                        "source": "scholar",
+                        "value": "dZNVjOEAAAAJ"
+                        },
+                        {
+                        "source": "scholar",
+                        "value": "DYfFSwsAAAAJ"
+                        }
+                    ],
+                    "corresponding": false,
+                    "corresponding_address": "",
+                    "corresponding_email": "",
+                    "updated": 1619654988,
+                    "affiliations": [
+                        {
+                        "_id": "60120ad44749273de6160274",
+                        "name": "National University of Colombia",
+                        "abbreviations": [
+                            "UNAL"
+                        ],
+                        "types": [
+                            "Education"
+                        ],
+                        "relationships": [],
+                        "addresses": [
                             {
-                            "_id": "60120afa4749273de6161883",
-                            "name": "University of Antioquia",
-                            "abbreviations": [],
-                            "types": [
-                                "Education"
-                            ],
-                            "relationships": [
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 4.635556,
+                            "lng": -74.082778,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Bogotá",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO"
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/National_University_of_Colombia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://unal.edu.co/"
+                            }
+                        ],
+                        "external_ids": [
+                            {
+                            "source": "grid",
+                            "value": "grid.10689.36"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0001 0286 3748"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100002753"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "1215553"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1150419"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/059yx9a68"
+                            }
+                        ],
+                        "logo_url": "",
+                        "branches": []
+                        }
+                    ]
+                    },
+                    {
+                    "_id": "5fc6487fb246cc0887190a9d",
+                    "full_name": "Boris Anghelo Rodriguez Rey",
+                    "first_names": "Boris Anghelo",
+                    "last_names": "Rodriguez Rey",
+                    "initials": "BA",
+                    "affiliations": [
+                        {
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
+                        "abbreviations": [],
+                        "types": [
+                            "Education"
+                        ],
+                        "relationships": [
+                            {
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
+                            "external_ids": [
                                 {
-                                "name": "Hôpital Saint-Vincent-de-Paul",
-                                "type": "Related",
-                                "external_ids": [
-                                    {
-                                    "source": "grid",
-                                    "value": "grid.413348.9"
-                                    }
-                                ],
-                                "id": ""
+                                "source": "grid",
+                                "value": "grid.413348.9"
+                                }
+                            ],
+                            "id": ""
+                            }
+                        ],
+                        "addresses": [
+                            {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO"
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
+                        ],
+                        "external_ids": [
+                            {
+                            "source": "grid",
+                            "value": "grid.412881.6"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100005278"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "2696975"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1258413"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
+                            }
+                        ],
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": [
+                            {
+                            "_id": "602c50d1fd74967db0663833",
+                            "name": "Facultad de Ciencias Exactas y Naturales",
+                            "abbreviations": [
+                                "FCEN"
+                            ],
+                            "type": "faculty",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
                                 }
                             ],
                             "addresses": [
@@ -430,603 +832,220 @@ class ColavDepartmentsApi(HunabkuPluginBase):
                                 "state": null,
                                 "state_code": "",
                                 "country": "Colombia",
-                                "country_code": "CO"
+                                "country_code": "CO",
+                                "email": ""
                                 }
                             ],
                             "external_urls": [
                                 {
-                                "source": "wikipedia",
-                                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                                "source": "website",
+                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
+                                }
+                            ],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c50f9fd74967db0663859",
+                            "name": "Instituto de Física",
+                            "abbreviations": [],
+                            "type": "department",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": null,
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": ""
+                                }
+                            ],
+                            "external_urls": [],
+                            "external_ids": [],
+                            "keywords": [],
+                            "subjects": []
+                            },
+                            {
+                            "_id": "602c510ffd74967db06638fb",
+                            "name": "Grupo de Fisica Atomica y Molecular",
+                            "abbreviations": [
+                                "GFAM"
+                            ],
+                            "type": "group",
+                            "relations": [
+                                {
+                                "name": "University of Antioquia",
+                                "collection": "institutions",
+                                "type": "university",
+                                "id": "60120afa4749273de6161883"
+                                }
+                            ],
+                            "addresses": [
+                                {
+                                "line_1": "",
+                                "line_2": "",
+                                "line_3": null,
+                                "lat": 6.267417,
+                                "lng": -75.568389,
+                                "postcode": "",
+                                "primary": false,
+                                "city": "Medellín",
+                                "state": "",
+                                "state_code": "",
+                                "country": "Colombia",
+                                "country_code": "CO",
+                                "email": "grupogenmol@udea.edu.co"
+                                }
+                            ],
+                            "external_urls": [
+                                {
+                                "source": "website",
+                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/investigacion/grupos-investigacion/ciencias-naturales-exactas/gfam"
                                 },
                                 {
-                                "source": "site",
-                                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                                "source": "gruplac",
+                                "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000001682"
                                 }
                             ],
                             "external_ids": [
                                 {
-                                "source": "grid",
-                                "value": "grid.412881.6"
-                                },
-                                {
-                                "source": "isni",
-                                "value": "0000 0000 8882 5269"
-                                },
-                                {
-                                "source": "fundref",
-                                "value": "501100005278"
-                                },
-                                {
-                                "source": "orgref",
-                                "value": "2696975"
-                                },
-                                {
-                                "source": "wikidata",
-                                "value": "Q1258413"
-                                },
-                                {
-                                "source": "ror",
-                                "value": "https://ror.org/03bp5hc83"
+                                "source": "colciencias",
+                                "id": "COL0008441"
                                 }
                             ],
-                            "branches": []
+                            "keywords": [],
+                            "subjects": [
+                                {
+                                "source": "area_ocde",
+                                "subjects": [
+                                    "ciencias naturales"
+                                ]
+                                },
+                                {
+                                "source": "subarea_ocde",
+                                "subjects": [
+                                    "ciencias físicas"
+                                ]
+                                },
+                                {
+                                "source": "udea",
+                                "subjects": [
+                                    "ciencias exactas y naturales"
+                                ]
+                                },
+                                {
+                                "source": "gruplac",
+                                "subjects": [
+                                    "dinámica de sistemas no lineales",
+                                    "fundamentos de la mécanica cuántica",
+                                    "ionización de átomos y moléculas",
+                                    "propiedades y procesos de dímeros alcalinos",
+                                    "sistemas cuánticos abiertos",
+                                    "sistemas finitos"
+                                ]
+                                }
+                            ]
                             }
                         ]
-                        },
-                        {
-                        "_id": "5fccc8dbeccc163512fee533",
-                        "national_id": 71598507,
-                        "full_name": "John Freddy Duitama Muñoz",
-                        "first_names": "John Freddy",
-                        "last_names": "Duitama Muñoz",
-                        "initials": "JF",
-                        "affiliations": [
-                            {
-                            "_id": "60120afa4749273de6161883",
-                            "name": "University of Antioquia",
-                            "abbreviations": [],
-                            "types": [
-                                "Education"
-                            ],
-                            "relationships": [
-                                {
-                                "name": "Hôpital Saint-Vincent-de-Paul",
-                                "type": "Related",
-                                "external_ids": [
-                                    {
-                                    "source": "grid",
-                                    "value": "grid.413348.9"
-                                    }
-                                ],
-                                "id": ""
-                                }
-                            ],
-                            "addresses": [
-                                {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO"
-                                }
-                            ],
-                            "external_urls": [
-                                {
-                                "source": "wikipedia",
-                                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
-                                },
-                                {
-                                "source": "site",
-                                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
-                                }
-                            ],
-                            "external_ids": [
-                                {
-                                "source": "grid",
-                                "value": "grid.412881.6"
-                                },
-                                {
-                                "source": "isni",
-                                "value": "0000 0000 8882 5269"
-                                },
-                                {
-                                "source": "fundref",
-                                "value": "501100005278"
-                                },
-                                {
-                                "source": "orgref",
-                                "value": "2696975"
-                                },
-                                {
-                                "source": "wikidata",
-                                "value": "Q1258413"
-                                },
-                                {
-                                "source": "ror",
-                                "value": "https://ror.org/03bp5hc83"
-                                }
-                            ],
-                            "branches": [
-                                {
-                                "_id": "602c50d1fd74967db066383a",
-                                "name": "Facultad de ingeniería",
-                                "abbreviations": [],
-                                "type": "faculty",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ingenieria"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c50f9fd74967db0663889",
-                                "name": "Departamento de ingeniería de sistemas",
-                                "abbreviations": [],
-                                "type": "department",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c510ffd74967db06638d9",
-                                "name": "Centro de investigaciones básicas y aplicadas en veterinaria- cibav",
-                                "abbreviations": [],
-                                "type": "group",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": "grupocatalizadoresyadsorbentes@udea.edu.co"
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "http://172.19.0.90:10039/wps/portal/udea/web/inicio/investigacion/grupos-investigacion/ciencias-agricolas/cibav"
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000015528"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": [
-                                    {
-                                    "source": "area_ocde",
-                                    "subjects": [
-                                        "ciencias agrícolas"
-                                    ]
-                                    },
-                                    {
-                                    "source": "subarea_ocde",
-                                    "subjects": [
-                                        "agricultura, silvicultura y pesca"
-                                    ]
-                                    },
-                                    {
-                                    "source": "udea",
-                                    "subjects": [
-                                        "ciencias de la salud "
-                                    ]
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "subjects": [
-                                        "anatomía veterinaria",
-                                        "microbiología molecular veterinaria",
-                                        "parasitología veterinaria",
-                                        "farmacología y toxicología veterinaria"
-                                    ]
-                                    }
-                                ]
-                                }
-                            ]
-                            }
-                        ],
-                        "keywords": [
-                            "intensive care unit",
-                            "least absolute shrinkage and selection operator",
-                            "prognosis prediction",
-                            "sepsis",
-                            "stochastic gradient boosting",
-                            "moving objects",
-                            "movement patterns",
-                            "flocks",
-                            "leadership",
-                            "application software",
-                            "development",
-                            "model-driven software architecture",
-                            "software engineering"
-                        ],
-                        "external_ids": [
-                            {
-                            "source": "scopus",
-                            "value": "16635559900"
-                            }
-                        ],
-                        "branches": [
-                            {
-                            "name": "Facultad de Ingeniería",
-                            "type": "faculty",
-                            "id": "602c50d1fd74967db066383a"
-                            },
-                            {
-                            "name": "Departamento de Ingeniería de Sistemas",
-                            "type": "department",
-                            "id": "602c50f9fd74967db0663889"
-                            },
-                            {
-                            "name": "Ingeniería y Software ",
-                            "type": "group",
-                            "id": "602c510ffd74967db06638d9"
-                            }
-                        ],
-                        "updated": 1613691968
-                        },
-                        {
-                        "_id": "5fccd24beccc163512fee53a",
-                        "national_id": 42792532,
-                        "full_name": "Natalia Gaviria Gomez",
-                        "first_names": "Natalia",
-                        "last_names": "Gaviria Gomez",
-                        "initials": "N",
-                        "affiliations": [
-                            {
-                            "_id": "60120afa4749273de6161883",
-                            "name": "University of Antioquia",
-                            "abbreviations": [],
-                            "types": [
-                                "Education"
-                            ],
-                            "relationships": [
-                                {
-                                "name": "Hôpital Saint-Vincent-de-Paul",
-                                "type": "Related",
-                                "external_ids": [
-                                    {
-                                    "source": "grid",
-                                    "value": "grid.413348.9"
-                                    }
-                                ],
-                                "id": ""
-                                }
-                            ],
-                            "addresses": [
-                                {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO"
-                                }
-                            ],
-                            "external_urls": [
-                                {
-                                "source": "wikipedia",
-                                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
-                                },
-                                {
-                                "source": "site",
-                                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
-                                }
-                            ],
-                            "external_ids": [
-                                {
-                                "source": "grid",
-                                "value": "grid.412881.6"
-                                },
-                                {
-                                "source": "isni",
-                                "value": "0000 0000 8882 5269"
-                                },
-                                {
-                                "source": "fundref",
-                                "value": "501100005278"
-                                },
-                                {
-                                "source": "orgref",
-                                "value": "2696975"
-                                },
-                                {
-                                "source": "wikidata",
-                                "value": "Q1258413"
-                                },
-                                {
-                                "source": "ror",
-                                "value": "https://ror.org/03bp5hc83"
-                                }
-                            ],
-                            "branches": [
-                                {
-                                "_id": "602c50d1fd74967db066383a",
-                                "name": "Facultad de ingeniería",
-                                "abbreviations": [],
-                                "type": "faculty",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ingenieria"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c50f9fd74967db066388a",
-                                "name": "Departamento de ingeniería electrónica",
-                                "abbreviations": [],
-                                "type": "department",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": ""
-                                    }
-                                ],
-                                "external_urls": [],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": []
-                                },
-                                {
-                                "_id": "602c510ffd74967db06639fe",
-                                "name": "Grupo de investigación en telecomunicaciones aplicadas",
-                                "abbreviations": [
-                                    "GITA"
-                                ],
-                                "type": "group",
-                                "relations": [
-                                    {
-                                    "name": "University of Antioquia",
-                                    "collection": "institutions",
-                                    "type": "university",
-                                    "id": "60120afa4749273de6161883"
-                                    }
-                                ],
-                                "addresses": [
-                                    {
-                                    "line_1": "",
-                                    "line_2": "",
-                                    "line_3": null,
-                                    "lat": 6.267417,
-                                    "lng": -75.568389,
-                                    "postcode": "",
-                                    "primary": false,
-                                    "city": "Medellín",
-                                    "state": null,
-                                    "state_code": "",
-                                    "country": "Colombia",
-                                    "country_code": "CO",
-                                    "email": "grupohistoriasaludpublica@udea.edu.co"
-                                    }
-                                ],
-                                "external_urls": [
-                                    {
-                                    "source": "website",
-                                    "url": "https://sites.google.com/site/grupotelecoudea/services"
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000002810"
-                                    }
-                                ],
-                                "external_ids": [],
-                                "keywords": [],
-                                "subjects": [
-                                    {
-                                    "source": "area_ocde",
-                                    "subjects": [
-                                        "ingeniería y tecnología"
-                                    ]
-                                    },
-                                    {
-                                    "source": "subarea_ocde",
-                                    "subjects": [
-                                        "ingenierías eléctrica, electrónica e informática"
-                                    ]
-                                    },
-                                    {
-                                    "source": "udea",
-                                    "subjects": [
-                                        "ingeniería"
-                                    ]
-                                    },
-                                    {
-                                    "source": "gruplac",
-                                    "subjects": [
-                                        "comunicaciones ópticas",
-                                        "contaminación e interferencia electromagnética",
-                                        "diseño de antenas y dispositivos de rf",
-                                        "modelamiento de sistemas de comunicaciones",
-                                        "procesamiento digital de señales y análisis de patrones",
-                                        "redes inalámbricas"
-                                    ]
-                                    }
-                                ]
-                                }
-                            ]
-                            }
-                        ],
-                        "keywords": [
-                            "antenna arrays",
-                            "antenna pattern synthesis",
-                            "beamforming",
-                            "linear arrays",
-                            "smart antennas",
-                            "performance evaluation model",
-                            "throughput",
-                            "single-hop wireless networks",
-                            "p2p streaming",
-                            "ns-3"
-                        ],
-                        "external_ids": [
-                            {
-                            "source": "scopus",
-                            "value": "53163467300"
-                            }
-                        ],
-                        "branches": [
-                            {
-                            "name": "Facultad de Ingeniería",
-                            "type": "faculty",
-                            "id": "602c50d1fd74967db066383a"
-                            },
-                            {
-                            "name": "Departamento de Ingeniería Electrónica",
-                            "type": "department",
-                            "id": "602c50f9fd74967db066388a"
-                            },
-                            {
-                            "name": "Grupo de Investigación en Telecomunicaciones Aplicadas - GITA",
-                            "type": "group",
-                            "id": "602c510ffd74967db06639fe"
-                            }
-                        ],
-                        "updated": 1613690880
                         }
                     ],
-                    "references_count": 18,
-                    "references": [],
-                    "citations_count": 8,
-                    "citations_link": "/scholar?cites=2826491854088452079&as_sdt=2005&sciodt=0,5&hl=en&oe=ASCII",
-                    "citations": []
+                    "keywords": [
+                        "teleconnections",
+                        "information transference",
+                        "regional enso influence",
+                        "seasonal state index",
+                        "luminescence",
+                        "microcavities",
+                        "optical properties",
+                        "polaritons",
+                        "bec",
+                        "optical encryption",
+                        "chaotic phase generation",
+                        "synchronization system"
+                    ],
+                    "external_ids": [
+                        {
+                        "source": "scopus",
+                        "value": "7102299387"
+                        },
+                        {
+                        "source": "orcid",
+                        "value": "0000-0001-5298-218X"
+                        },
+                        {
+                        "source": "scopus",
+                        "value": "57208737126"
+                        },
+                        {
+                        "source": "scholar",
+                        "value": "swUKsPkAAAAJ"
+                        }
+                    ],
+                    "branches": [
+                        {
+                        "name": "Facultad de Ciencias Exactas y Naturales",
+                        "type": "faculty",
+                        "id": "602c50d1fd74967db0663833"
+                        },
+                        {
+                        "name": "Instituto de Física",
+                        "type": "department",
+                        "id": "602c50f9fd74967db0663859"
+                        },
+                        {
+                        "name": "Grupo de Fisica Atomica y Molecular",
+                        "id": "602c510ffd74967db06638fb",
+                        "type": "group"
+                        }
+                    ],
+                    "updated": 1619612575
                     }
                 ],
-                "count": 7,
-                "page": 1,
-                "total_results": 7
+                "references_count": 28,
+                "references": [],
+                "citations_count": 13,
+                "citations_link": "/scholar?cites=7498246802043491003&as_sdt=2005&sciodt=0,5&hl=en&oe=ASCII",
+                "citations": [],
+                "topics": [
+                    {
+                    "source": "lens",
+                    "topics": [
+                        "Physics",
+                        "Quantum dot",
+                        "Master equation",
+                        "Polariton",
+                        "Photon",
+                        "Hamiltonian (quantum mechanics)",
+                        "Condensed matter physics",
+                        "Quantum master equation",
+                        "Quantum system",
+                        "Quantum electrodynamics",
+                        "Quantum mechanics",
+                        "Jaynes–Cummings model"
+                    ]
+                    }
+                ]
+                }
+            ],
+            "count": 100,
+            "page": 1,
+            "total_results": 930
             }
         """
         data = self.request.args.get('data')

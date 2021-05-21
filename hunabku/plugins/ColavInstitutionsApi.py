@@ -25,13 +25,13 @@ class ColavInstitutionsApi(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)})
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
             else:
-                cursor=self.db['documents'].find({"authors.affiliations._id":ObjectId(idx)})
+                cursor=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)})
         else:
             cursor=self.db['documents'].find()
 
@@ -66,25 +66,25 @@ class ColavInstitutionsApi(HunabkuPluginBase):
 
         for paper in cursor:
             entry=paper
-            source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
             if source:
                 entry["source"]=source
             authors=[]
             for author in paper["authors"]:
                 au_entry=author
-                author_db=self.db["authors"].find_one({"_id":author["_id"]})
+                author_db=self.db["authors"].find_one({"_id":author["id"]})
                 if author_db:
                     au_entry=author_db
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry=aff
-                    aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
+                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
                         aff_entry=aff_db
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
-                            branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
+                            branch_db=self.db["branches"].find_one({"_id":branch["id"]}) if "id" in branch.keys() else ""
                             if branch_db:
                                 branches.append(branch_db)
                     aff_entry["branches"]=branches
@@ -126,10 +126,10 @@ class ColavInstitutionsApi(HunabkuPluginBase):
         else:
             return None
 
-    @endpoint('/api/institution', methods=['GET'])
-    def api_institution(self):
+    @endpoint('/api/institutions', methods=['GET'])
+    def api_institutions(self):
         """
-        @api {get} /api/institution Institution
+        @api {get} /api/institutions Institution
         @apiName api
         @apiGroup CoLav api
         @apiDescription Responds with information about the institution
@@ -148,702 +148,674 @@ class ColavInstitutionsApi(HunabkuPluginBase):
         @apiError (Error 200) msg  The HTTP 200 OK.
 
         @apiSuccessExample {json} Success-Response (data=info):
-            HTTP/1.1 200 OK
-            {
-                "id": "602c50d1fd74967db0663833",
-                "name": "Facultad de ciencias exactas y naturales",
-                "type": "faculty",
-                "external_urls": [
-                    {
-                    "source": "website",
-                    "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                    }
-                ],
-                "departments": [
-                    {
-                    "id": "602c50f9fd74967db0663858",
-                    "name": "Instituto de matemáticas"
-                    }
-                ],
-                "groups": [
-                    {
-                    "id": "602c510ffd74967db06639a7",
-                    "name": "Modelación con ecuaciones diferenciales"
-                    },
-                    {
-                    "id": "602c510ffd74967db06639ad",
-                    "name": "álgebra u de a"
-                    }
-                ],
-                "authors": [
-                    {
-                    "full_name": "Roberto Cruz Rodes",
-                    "id": "5fc5a419b246cc0887190a64"
-                    },
-                    {
-                    "full_name": "Jairo Eloy Castellanos Ramos",
-                    "id": "5fc5a4b7b246cc0887190a65"
-                    }
-                ],
-                "institution": [
-                    {
-                    "name": "University of Antioquia",
-                    "id": "60120afa4749273de6161883"
-                    }
-                ]
-            }
+        HTTP/1.1 200 OK
+        {
+            "id": "60120afa4749273de6161883",
+            "name": "Universidad de Antioquia",
+            "external_urls": [
+                {
+                "source": "wikipedia",
+                "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                },
+                {
+                "source": "site",
+                "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                }
+            ],
+            "departments": [
+                {
+                "name": "Departamento de Artes Visuales",
+                "id": "602c50f9fd74967db0663854"
+                },
+                {
+                "name": "Departamento de Formación Académica",
+                "id": "602c50f9fd74967db0663873"
+                },
+                {
+                "name": "Departamento de Formación Académica",
+                "id": "602c50f9fd74967db06638a6"
+                },
+                {
+                "name": "Escuela de Medicina Veterinaria",
+                "id": "602c50f9fd74967db06638a9"
+                },
+                {
+                "name": "Departamento de Producción Agropecuaria",
+                "id": "602c50f9fd74967db06638aa"
+                },
+                {
+                "name": "Centro de Investigaciones Agrarias, Ciagra",
+                "id": "602c50f9fd74967db06638ab"
+                },
+                {
+                "name": "Departamento de Formación Básica Profesional",
+                "id": "602c50f9fd74967db06638ae"
+                },
+                {
+                "name": "Departamento de Formación Profesional",
+                "id": "602c50f9fd74967db06638af"
+                },
+                {
+                "name": "Departamento de Extensión y Posgrados",
+                "id": "602c50f9fd74967db06638b0"
+                },
+                {
+                "name": "Departamento de Ciencias Básicas",
+                "id": "602c50f9fd74967db06638b3"
+                },
+                {
+                "name": "Departamento de Ciencias Específicas",
+                "id": "602c50f9fd74967db06638b4"
+                },
+                {
+                "name": "Programa Gestión Tecnológica",
+                "id": "602c50f9fd74967db06638d1"
+                }
+            ],
+            "faculties": [
+                {
+                "name": "Facultad de Artes",
+                "id": "602c50d1fd74967db0663830"
+                },
+                {
+                "name": "Facultad de Ciencias Agrarias",
+                "id": "602c50d1fd74967db0663831"
+                },
+                {
+                "name": "Facultad de Ciencias Económicas",
+                "id": "602c50d1fd74967db0663832"
+                },
+                {
+                "name": "Instituto de Estudios Regionales",
+                "id": "602c50d1fd74967db0663845"
+                },
+                {
+                "name": "Corporación Académica Ambiental",
+                "id": "602c50d1fd74967db0663846"
+                },
+                {
+                "name": "Corporación Académica Ciencias Básicas Biomédicas",
+                "id": "602c50d1fd74967db0663847"
+                },
+                {
+                "name": "Corporación Académica Para el Estudio de Patologías Tropicales",
+                "id": "602c50d1fd74967db0663848"
+                }
+            ],
+            "area_groups": [],
+            "logo": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg"
+        }
         @apiSuccessExample {json} Success-Response (data=production):
-        [
-            {
-                "_id": "602ef788728ecc2d8e62d4f1",
-                "updated": 1613690757,
+        HTTP/1.1 200 OK
+        {
+            "data": [
+                {
+                "_id": "606a4c52aa884b9a1562e190",
+                "updated": 1617579088,
                 "source_checked": [
-                {
+                    {
                     "source": "lens",
-                    "ts": 1613690757
-                },
-                {
-                    "source": "wos",
-                    "ts": 1613690757
-                },
-                {
+                    "ts": 1617579080
+                    },
+                    {
+                    "source": "oadoi",
+                    "ts": 1617579088
+                    },
+                    {
                     "source": "scholar",
-                    "ts": 1613690757
-                },
-                {
-                    "source": "scholar",
-                    "ts": 1613690757
-                },
-                {
-                    "source": "scopus",
-                    "ts": 1613690757
-                }
+                    "ts": 1617579088
+                    }
                 ],
-                "publication_type": "journal article",
+                "publication_type": "book chapter",
                 "titles": [
-                {
-                    "title": "Product and quotient of correlated beta variables",
-                    "lang": "en",
-                    "title_idx": "product and quotient of correlated beta variables"
-                }
+                    {
+                    "title": "Programming Optimization of Roasted Coffee Production in a Coffee Roasting Company",
+                    "lang": "en"
+                    }
                 ],
                 "subtitle": "",
-                "abstract": "Abstract Let U , V , W be independent random variables having a standard gamma distribution with respective shape parameters a , b , c , and define X = U / ( U + W ) , Y = V / ( V + W ) . Clearly, X and Y are correlated each having a beta distribution, X ∼ B ( a , c ) and Y ∼ B ( b , c ) . In this article we derive probability density functions of X Y , X / Y and X / ( X + Y ) .",
-                "abstract_idx": "abstract let u , v , w be independent random variables having a standard gamma distribution with respective shape parameters a , b , c , and define x = u / ( u + w ) , y = v / ( v + w ) . clearly, x and y are correlated each having a beta distribution, x ∼ b ( a , c ) and y ∼ b ( b , c ) . in this article we derive probability density functions of x y , x / y and x / ( x + y ) .",
-                "keywords": [
-                "cluster analysis",
-                "probability distributions",
-                "random variables"
-                ],
-                "start_page": 105,
-                "end_page": 109,
-                "volume": "22",
-                "issue": "1",
-                "date_published": "",
-                "year_published": 2009,
-                "languages": [
-                "en"
-                ],
-                "bibtex": "@article{nagar2009product,\n  title={Product and quotient of correlated beta variables},\n  author={Nagar, Daya K and Orozco-Casta{\\~n}eda, Johanna Marcela and Gupta, Arjun K},\n  journal={Applied Mathematics Letters},\n  volume={22},\n  number={1},\n  pages={105--109},\n  year={2009},\n  publisher={Elsevier}\n}\n",
-                "funding_organization": "Universidad de Antioquia, UdeA",
-                "funding_details": [
-                "The research work of DKN and JMO-C was supported by the Comité para el Desarrollo de la Investigación, Universidad de Antioquia research grant no. IN550CE."
-                ],
+                "abstract": "This work focuses on the development of a methodology to support the planning of aggregated production within a roasted coffee industrializing company. The methodology involves optimization techniques and computational tools for the assigning of lots to roasting lines while minimizing total costs and fulfilling the specifications of the process.",
+                "keywords": [],
+                "start_page": 471,
+                "end_page": 480,
+                "volume": "",
+                "issue": "",
+                "date_published": 1571097600,
+                "year_published": 2019,
+                "languages": [],
+                "bibtex": "@inproceedings{giraldo2020programming,\n  title={Programming Optimization of Roasted Coffee Production in a Coffee Roasting Company},\n  author={Giraldo H, Joaqu{\\'\\i}n H},\n  booktitle={Operations Management for Social Good: 2018 POMS International Conference in Rio},\n  pages={471--480},\n  year={2020},\n  organization={Springer}\n}\n",
+                "funding_organization": "",
+                "funding_details": "",
                 "is_open_access": false,
                 "open_access_status": "closed",
                 "external_ids": [
-                {
+                    {
                     "source": "lens",
-                    "id": "017-994-271-766-456"
-                },
-                {
-                    "source": "doi",
-                    "id": "10.1016/j.aml.2008.02.014"
-                },
-                {
+                    "id": "002-020-650-202-669"
+                    },
+                    {
                     "source": "magid",
-                    "id": "2097225090"
-                },
-                {
-                    "source": "wos",
-                    "id": "000262240800021"
-                },
-                {
-                    "source": "scopus",
-                    "id": "2-s2.0-55849151367"
-                },
-                {
+                    "id": "2980909116"
+                    },
+                    {
+                    "source": "doi",
+                    "id": "10.1007/978-3-030-23816-2_46"
+                    },
+                    {
                     "source": "scholar",
-                    "id": "_fj95eM0K1IJ"
-                }
+                    "id": "lL73wzUJm4EJ"
+                    }
                 ],
-                "urls": [
-                {
-                    "source": "scopus",
-                    "url": "https://www.scopus.com/inward/record.uri?eid=2-s2.0-55849151367&doi=10.1016%2fj.aml.2008.02.014&partnerID=40&md5=c9769e0da8fdc04b8259694901b4caaa"
-                }
-                ],
+                "urls": [],
                 "source": {
-                "_id": "602ef788728ecc2d8e62d4ef",
+                    "_id": "606a4c52aa884b9a1562e18e",
+                    "source_checked": [
+                    {
+                        "source": "scholar",
+                        "date": 1617579088
+                    },
+                    {
+                        "source": "lens",
+                        "date": 1617579088
+                    }
+                    ],
+                    "updated": 1617579088,
+                    "title": "Operations Management for Social Good",
+                    "type": "",
+                    "publisher": "Springer International Publishing",
+                    "institution": "",
+                    "institution_id": "",
+                    "country": "",
+                    "submission_charges": "",
+                    "submission_currency": "",
+                    "apc_charges": "",
+                    "apc_currency": "",
+                    "serials": [
+                    {
+                        "type": "pissn",
+                        "value": "21987246"
+                    },
+                    {
+                        "type": "eissn",
+                        "value": "21987254"
+                    }
+                    ],
+                    "abbreviations": [],
+                    "subjects": {}
+                },
+                "author_count": 1,
+                "authors": [
+                    {
+                    "_id": "606a4c52aa884b9a1562e18f",
+                    "national_id": "",
+                    "source_checked": [
+                        {
+                        "source": "lens",
+                        "date": 1617579088
+                        },
+                        {
+                        "source": "scholar",
+                        "date": 1617579088
+                        }
+                    ],
+                    "full_name": "H H Joaquín Giraldo",
+                    "first_names": "H H Joaquín",
+                    "last_names": "Giraldo",
+                    "initials": "HHJ",
+                    "aliases": [
+                        "h h joaquín giraldo",
+                        "joaquı́n h giraldo h"
+                    ],
+                    "branches": [],
+                    "keywords": [],
+                    "external_ids": [],
+                    "corresponding": true,
+                    "corresponding_address": "",
+                    "corresponding_email": "",
+                    "updated": 1617579088,
+                    "affiliations": [
+                        {
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
+                        "aliases": [],
+                        "abbreviations": [],
+                        "types": [
+                            "Education"
+                        ],
+                        "relationships": [
+                            {
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
+                            "external_ids": [
+                                {
+                                "source": "grid",
+                                "value": "grid.413348.9"
+                                }
+                            ],
+                            "id": ""
+                            }
+                        ],
+                        "addresses": [
+                            {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO",
+                            "geonames_city": {
+                                "id": 3674962,
+                                "city": "Medellín",
+                                "nuts_level1": null,
+                                "nuts_level2": null,
+                                "nuts_level3": null,
+                                "geonames_admin1": {
+                                "name": "Antioquia",
+                                "ascii_name": "Antioquia",
+                                "code": "CO.02"
+                                },
+                                "geonames_admin2": {
+                                "name": "Medellín",
+                                "ascii_name": "Medellin",
+                                "code": "CO.02.05001"
+                                },
+                                "license": {
+                                "attribution": "Data from geonames.org under a CC-BY 3.0 license",
+                                "license": "http://creativecommons.org/licenses/by/3.0/"
+                                }
+                            }
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
+                        ],
+                        "external_ids": [
+                            {
+                            "source": "grid",
+                            "value": "grid.412881.6"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100005278"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "2696975"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1258413"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
+                            }
+                        ],
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": []
+                        }
+                    ]
+                    }
+                ],
+                "references_count": 6,
+                "references": [],
+                "citations_count": 0,
+                "citations_link": "",
+                "citations": [],
+                "topics": [
+                    {
+                    "source": "lens",
+                    "topics": [
+                        "Roasting",
+                        "Business",
+                        "Total cost",
+                        "Process engineering",
+                        "Coffee roasting"
+                    ]
+                    }
+                ]
+                },
+                {
+                "_id": "606a4c52aa884b9a1562e192",
+                "updated": 1617579085,
                 "source_checked": [
                     {
-                    "source": "scopus",
-                    "date": 1613690757
+                    "source": "lens",
+                    "ts": 1617579080
                     },
                     {
-                    "source": "wos",
-                    "date": 1613690757
+                    "source": "oadoi",
+                    "ts": 1617579085
                     },
                     {
                     "source": "scholar",
-                    "date": 1613690757
-                    },
+                    "ts": 1617579085
+                    }
+                ],
+                "publication_type": "journal article",
+                "titles": [
+                    {
+                    "title": "Evaluación económica del stent medicado vs. convencional para pacientes con infarto agudo de miocardio con elevación del ST en Colombia",
+                    "lang": "es"
+                    }
+                ],
+                "subtitle": "",
+                "abstract": "Resumen Objetivo Analizar la costo-efectividad y el valor esperado de la informacion perfecta del stent medicado con sirolimus comparado con el convencional para pacientes con infarto agudo de miocardio con elevacion del ST en Colombia. Metodos Se construyo un modelo de Markov bajo la perspectiva del pagador y un horizonte temporal de diez anos. Las probabilidades de transicion se extrajeron de estudios clinicos identificados a partir de revisiones de la literatura. Los costos se estimaron mediante el uso de consenso de expertos y manuales tarifarios colombianos. Se realizo un analisis de sensibilidad deterministico alrededor del horizonte temporal, precio del stent medicado y tasa de descuento. Se construyo un analisis de sensibilidad probabilistico (10.000 simulaciones de Monte Carlo) y el valor esperado de la informacion perfecta para la decision global y grupos de parametros. Resultados En el caso base, el costo por ano de vida ajustado por calidad se ubico en 53.749.654 $. Los resultados no son sensibles al horizonte temporal ni a la tasa de descuento, pero si al precio del stent medicado. El valor esperado de la informacion perfecta fue significativamente mayor para la probabilidad de muerte y de sufrir una trombosis muy tardia del stent . Conclusiones El stent medicado con sirolimus no es costo-efectivo para pacientes con infarto agudo de miocardio con elevacion del ST en Colombia. Se recomienda mayor investigacion futura sobre la probabilidad de muerte y trombosis muy tardia del stent , asi como en subgrupos especificos de pacientes y stents medicados de segunda generacion.",
+                "keywords": [],
+                "start_page": 364,
+                "end_page": 371,
+                "volume": "21",
+                "issue": "6",
+                "date_published": 1414800000,
+                "year_published": 2014,
+                "languages": [],
+                "bibtex": "@article{ceballos2014economic,\n  title={Economic evaluation of medicated stent vs. standard stent for patients with acute myocardial infarction with ST elevation in Colombia},\n  author={Ceballos, Mateo},\n  journal={Revista Colombiana de Cardiolog{\\'\\i}a},\n  volume={21},\n  number={6},\n  pages={364--371},\n  year={2014},\n  publisher={Sociedad Colombiana de Cardiologia}\n}\n",
+                "funding_organization": "",
+                "funding_details": "",
+                "is_open_access": true,
+                "open_access_status": "gold",
+                "external_ids": [
                     {
                     "source": "lens",
-                    "date": 1613690757
-                    }
-                ],
-                "updated": 1613690757,
-                "title": "Applied Mathematics Letters",
-                "type": "journal",
-                "publisher": "Elsevier Limited",
-                "institution": "",
-                "institution_id": "",
-                "country": "GB",
-                "submission_charges": "",
-                "submission_currency": "",
-                "apc_charges": "",
-                "apc_currency": "",
-                "serials": [
-                    {
-                    "type": "unknown",
-                    "value": "08939659"
+                    "id": "101-092-542-835-129"
                     },
                     {
-                    "type": "coden",
-                    "value": "AMLEE"
-                    }
-                ],
-                "abbreviations": [
-                    {
-                    "type": "unknown",
-                    "value": "Appl Math Lett"
+                    "source": "magid",
+                    "id": "1967859901"
                     },
                     {
-                    "type": "char",
-                    "value": "APPL MATH LETT"
+                    "source": "coreid",
+                    "id": "82782675"
                     },
                     {
-                    "type": "iso",
-                    "value": "Appl. Math. Lett."
+                    "source": "doi",
+                    "id": "10.1016/j.rccar.2014.06.005"
+                    },
+                    {
+                    "source": "scholar",
+                    "id": "JdWY8CFxctwJ"
                     }
                 ],
-                "subjects": {},
-                "title_idx": "applied mathematics letters",
-                "publisher_idx": "elsevier limited"
+                "urls": [],
+                "source": {
+                    "_id": "600f50261fc9947fc8a8d2e8",
+                    "updated": 1617579141,
+                    "source_checked": [
+                    {
+                        "source": "doaj",
+                        "ts": 1611616294
+                    },
+                    {
+                        "source": "scopus",
+                        "date": 1617579130
+                    },
+                    {
+                        "source": "scholar",
+                        "date": 1617579130
+                    },
+                    {
+                        "source": "lens",
+                        "date": 1617579130
+                    }
+                    ],
+                    "title": "Revista Colombiana de Cardiología",
+                    "title_idx": "revista colombiana de cardiología",
+                    "type": "",
+                    "publisher": "Elsevier",
+                    "publisher_idx": "elsevier",
+                    "institution": "Sociedad Colombiana de Cardiología y Cirugía Cardiovascular",
+                    "institution_id": "",
+                    "external_urls": [
+                    {
+                        "source": "site",
+                        "url": "https://www.journals.elsevier.com/revista-colombiana-de-cardiologia/"
+                    }
+                    ],
+                    "country": "ES",
+                    "editorial_review": "Double blind peer review",
+                    "submission_charges": "",
+                    "submission_charges_url": "",
+                    "submmission_currency": "",
+                    "apc_charges": "",
+                    "apc_currency": "",
+                    "apc_url": "",
+                    "serials": [
+                    {
+                        "type": "pissn",
+                        "value": "01205633"
+                    }
+                    ],
+                    "abbreviations": [
+                    {
+                        "type": "unknown",
+                        "value": "Rev. Colomb. Cardiol."
+                    }
+                    ],
+                    "aliases": [],
+                    "subjects": [
+                    {
+                        "code": "RC666-701",
+                        "scheme": "LCC",
+                        "term": "Diseases of the circulatory (Cardiovascular) system"
+                    }
+                    ],
+                    "keywords": [
+                    "cardiovascular diseases",
+                    "medical and surgery therapy",
+                    "pediatric cardiology"
+                    ],
+                    "author_copyright": "False",
+                    "license": [
+                    {
+                        "embedded_example_url": "http://www.sciencedirect.com/science/article/pii/S0120563316301887",
+                        "NC": true,
+                        "ND": true,
+                        "BY": true,
+                        "open_access": true,
+                        "title": "CC BY-NC-ND",
+                        "type": "CC BY-NC-ND",
+                        "embedded": true,
+                        "url": "https://www.elsevier.com/journals/revista-colombiana-de-cardiologia/0120-5633/open-access-journal",
+                        "SA": false
+                    }
+                    ],
+                    "languages": [
+                    "EN",
+                    "ES"
+                    ],
+                    "plagiarism_detection": true,
+                    "active": true,
+                    "publication_time": 17,
+                    "deposit_policies": ""
                 },
-                "author_count": 3,
+                "author_count": 1,
                 "authors": [
-                {
-                    "_id": "5fc5b0a5b246cc0887190a69",
-                    "national_id": 279739,
-                    "full_name": "Daya Krishna Nagar",
-                    "first_names": "Daya  Krishna",
-                    "last_names": "Nagar",
-                    "initials": "DK",
-                    "aliases": [
-                    "daya k. nagar",
-                    "nagar d.k.",
-                    "daya k nagar"
-                    ],
-                    "affiliations": [
                     {
-                        "_id": "60120afa4749273de6161883",
-                        "branches": [
+                    "_id": "606a4c52aa884b9a1562e191",
+                    "national_id": "",
+                    "source_checked": [
                         {
-                            "_id": "602c50d1fd74967db0663833",
-                            "name": "Facultad de ciencias exactas y naturales",
-                            "name_idx": "facultad de ciencias exactas y naturales",
-                            "aliases": [],
-                            "abbreviations": [
-                            "FCEN"
-                            ],
-                            "type": "faculty",
-                            "relations": [
-                            {
-                                "name": "University of Antioquia",
-                                "collection": "institutions",
-                                "type": "university",
-                                "id": "60120afa4749273de6161883"
-                            }
-                            ],
-                            "addresses": [
-                            {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO",
-                                "geonames_city": {
-                                "id": 3674962,
-                                "city": "Medellín",
-                                "nuts_level1": null,
-                                "nuts_level2": null,
-                                "nuts_level3": null,
-                                "geonames_admin1": {
-                                    "name": "Antioquia",
-                                    "ascii_name": "Antioquia",
-                                    "code": "CO.02"
-                                },
-                                "geonames_admin2": {
-                                    "name": "Medellín",
-                                    "ascii_name": "Medellin",
-                                    "code": "CO.02.05001"
-                                },
-                                "license": {
-                                    "attribution": "Data from geonames.org under a CC-BY 3.0 license",
-                                    "license": "http://creativecommons.org/licenses/by/3.0/"
-                                }
-                                },
-                                "email": ""
-                            }
-                            ],
-                            "external_urls": [
-                            {
-                                "source": "website",
-                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                            }
-                            ],
-                            "external_ids": [],
-                            "keywords": [],
-                            "subjects": []
+                        "source": "lens",
+                        "date": 1617579085
                         },
                         {
-                            "_id": "602c50f9fd74967db0663858",
-                            "name": "Instituto de matemáticas",
-                            "name_idx": "instituto de matematicas",
-                            "aliases": [],
-                            "abbreviations": [],
-                            "type": "department",
-                            "relations": [
-                            {
-                                "name": "University of Antioquia",
-                                "collection": "institutions",
-                                "type": "university",
-                                "id": "60120afa4749273de6161883"
-                            }
-                            ],
-                            "addresses": [
-                            {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO",
-                                "geonames_city": {
-                                "id": 3674962,
-                                "city": "Medellín",
-                                "nuts_level1": null,
-                                "nuts_level2": null,
-                                "nuts_level3": null,
-                                "geonames_admin1": {
-                                    "name": "Antioquia",
-                                    "ascii_name": "Antioquia",
-                                    "code": "CO.02"
-                                },
-                                "geonames_admin2": {
-                                    "name": "Medellín",
-                                    "ascii_name": "Medellin",
-                                    "code": "CO.02.05001"
-                                },
-                                "license": {
-                                    "attribution": "Data from geonames.org under a CC-BY 3.0 license",
-                                    "license": "http://creativecommons.org/licenses/by/3.0/"
-                                }
-                                },
-                                "email": ""
-                            }
-                            ],
-                            "external_urls": [],
-                            "external_ids": [],
-                            "keywords": [],
-                            "subjects": []
-                        },
-                        {
-                            "_id": "602c510ffd74967db06638d6",
-                            "name": "Análisis multivariado",
-                            "name_idx": "analisis multivariado",
-                            "aliases": [],
-                            "abbreviations": [],
-                            "type": "group",
-                            "relations": [
-                            {
-                                "name": "University of Antioquia",
-                                "collection": "institutions",
-                                "type": "university",
-                                "id": "60120afa4749273de6161883"
-                            }
-                            ],
-                            "addresses": [
-                            {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO",
-                                "geonames_city": {
-                                "id": 3674962,
-                                "city": "Medellín",
-                                "nuts_level1": null,
-                                "nuts_level2": null,
-                                "nuts_level3": null,
-                                "geonames_admin1": {
-                                    "name": "Antioquia",
-                                    "ascii_name": "Antioquia",
-                                    "code": "CO.02"
-                                },
-                                "geonames_admin2": {
-                                    "name": "Medellín",
-                                    "ascii_name": "Medellin",
-                                    "code": "CO.02.05001"
-                                },
-                                "license": {
-                                    "attribution": "Data from geonames.org under a CC-BY 3.0 license",
-                                    "license": "http://creativecommons.org/licenses/by/3.0/"
-                                }
-                                },
-                                "email": ""
-                            }
-                            ],
-                            "external_urls": [
-                            {
-                                "source": "website",
-                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/investigacion/grupos-investigacion/ciencias-naturales-exactas/analisis-multivariado"
-                            },
-                            {
-                                "source": "gruplac",
-                                "url": "https://scienti.colciencias.gov.co/gruplac/jsp/visualiza/visualizagr.jsp?nro=00000000001670"
-                            }
-                            ],
-                            "external_ids": [],
-                            "keywords": [],
-                            "subjects": [
-                            {
-                                "source": "area_ocde",
-                                "subjects": [
-                                "ciencias naturales"
-                                ]
-                            },
-                            {
-                                "source": "subarea_ocde",
-                                "subjects": [
-                                "matemática"
-                                ]
-                            },
-                            {
-                                "source": "udea",
-                                "subjects": [
-                                "ciencias exactas y naturales"
-                                ]
-                            },
-                            {
-                                "source": "gruplac",
-                                "subjects": [
-                                "análisis multivariado",
-                                "computación",
-                                "funciones especiales",
-                                "pruebas de hipótesis y estimación",
-                                "teoría de las distribuciones"
-                                ]
-                            }
-                            ]
+                        "source": "scholar",
+                        "date": 1617579085
                         }
-                        ]
-                    }
                     ],
-                    "keywords": [
-                    "beta distribution",
-                    "bivariate distribution",
-                    "extended beta function"
-                    ],
-                    "external_ids": [
-                    {
-                        "source": "scopus",
-                        "value": "6701857476"
-                    }
-                    ],
-                    "branches": [
-                    {
-                        "name": "Facultad de Ciencias Exactas y Naturales",
-                        "type": "faculty",
-                        "id": "602c50d1fd74967db0663833"
-                    },
-                    {
-                        "name": "Instituto de matemáticas",
-                        "type": "department",
-                        "id": "602c50f9fd74967db0663858"
-                    },
-                    {
-                        "name": "Análisis Multivariado",
-                        "type": "group",
-                        "id": "602c510ffd74967db06638d6"
-                    }
-                    ],
-                    "updated": 1613690947
-                },
-                {
-                    "_id": "5fc5bebab246cc0887190a70",
-                    "national_id": 43463670,
-                    "full_name": "Johanna Marcela Orozco Castañeda",
-                    "first_names": "Johanna Marcela",
-                    "last_names": "Orozco Castañeda",
-                    "initials": "JM",
+                    "full_name": "Mateo Ceballos",
+                    "first_names": "Mateo",
+                    "last_names": "Ceballos",
+                    "initials": "M",
                     "aliases": [
-                    "johanna marcela orozco-castañeda",
-                    "orozco-castañeda j.m.",
-                    "johanna marcela orozco-castaneda",
-                    "orozco castañeda, j.m.,"
+                        "mateo ceballos",
+                        "ceballos, m.,",
+                        "m. ceballos",
+                        "m ceballos",
+                        "P. Castro",
+                        "p castro",
+                        "Mateo Ceballos"
                     ],
-                    "affiliations": [
-                    {
-                        "_id": "60120afa4749273de6161883",
-                        "branches": [
+                    "branches": [],
+                    "keywords": [],
+                    "external_ids": [
                         {
-                            "_id": "602c50d1fd74967db0663833",
-                            "name": "Facultad de ciencias exactas y naturales",
-                            "name_idx": "facultad de ciencias exactas y naturales",
-                            "aliases": [],
-                            "abbreviations": [
-                            "FCEN"
-                            ],
-                            "type": "faculty",
-                            "relations": [
-                            {
-                                "name": "University of Antioquia",
-                                "collection": "institutions",
-                                "type": "university",
-                                "id": "60120afa4749273de6161883"
-                            }
-                            ],
-                            "addresses": [
-                            {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO",
-                                "geonames_city": {
-                                "id": 3674962,
-                                "city": "Medellín",
-                                "nuts_level1": null,
-                                "nuts_level2": null,
-                                "nuts_level3": null,
-                                "geonames_admin1": {
-                                    "name": "Antioquia",
-                                    "ascii_name": "Antioquia",
-                                    "code": "CO.02"
-                                },
-                                "geonames_admin2": {
-                                    "name": "Medellín",
-                                    "ascii_name": "Medellin",
-                                    "code": "CO.02.05001"
-                                },
-                                "license": {
-                                    "attribution": "Data from geonames.org under a CC-BY 3.0 license",
-                                    "license": "http://creativecommons.org/licenses/by/3.0/"
-                                }
-                                },
-                                "email": ""
-                            }
-                            ],
-                            "external_urls": [
-                            {
-                                "source": "website",
-                                "url": "http://www.udea.edu.co/wps/portal/udea/web/inicio/unidades-academicas/ciencias-exactas-naturales"
-                            }
-                            ],
-                            "external_ids": [],
-                            "keywords": [],
-                            "subjects": []
+                        "source": "scholar",
+                        "value": "IR4SXtgAAAAJ"
                         },
                         {
-                            "_id": "602c50f9fd74967db0663858",
-                            "name": "Instituto de matemáticas",
-                            "name_idx": "instituto de matematicas",
-                            "aliases": [],
-                            "abbreviations": [],
-                            "type": "department",
-                            "relations": [
+                        "source": "scopus",
+                        "value": "56100586000"
+                        },
+                        {
+                        "source": "scholar",
+                        "value": "nhel9lYAAAAJ"
+                        }
+                    ],
+                    "corresponding": true,
+                    "corresponding_address": "",
+                    "corresponding_email": "",
+                    "updated": 1619612326,
+                    "affiliations": [
+                        {
+                        "_id": "60120afa4749273de6161883",
+                        "name": "Universidad de Antioquia",
+                        "aliases": [],
+                        "abbreviations": [],
+                        "types": [
+                            "Education"
+                        ],
+                        "relationships": [
                             {
-                                "name": "University of Antioquia",
-                                "collection": "institutions",
-                                "type": "university",
-                                "id": "60120afa4749273de6161883"
-                            }
+                            "name": "Hôpital Saint-Vincent-de-Paul",
+                            "type": "Related",
+                            "external_ids": [
+                                {
+                                "source": "grid",
+                                "value": "grid.413348.9"
+                                }
                             ],
-                            "addresses": [
+                            "id": ""
+                            }
+                        ],
+                        "addresses": [
                             {
-                                "line_1": "",
-                                "line_2": "",
-                                "line_3": null,
-                                "lat": 6.267417,
-                                "lng": -75.568389,
-                                "postcode": "",
-                                "primary": false,
-                                "city": "Medellín",
-                                "state": null,
-                                "state_code": "",
-                                "country": "Colombia",
-                                "country_code": "CO",
-                                "geonames_city": {
+                            "line_1": "",
+                            "line_2": "",
+                            "line_3": null,
+                            "lat": 6.267417,
+                            "lng": -75.568389,
+                            "postcode": "",
+                            "primary": false,
+                            "city": "Medellín",
+                            "state": null,
+                            "state_code": "",
+                            "country": "Colombia",
+                            "country_code": "CO",
+                            "geonames_city": {
                                 "id": 3674962,
                                 "city": "Medellín",
                                 "nuts_level1": null,
                                 "nuts_level2": null,
                                 "nuts_level3": null,
                                 "geonames_admin1": {
-                                    "name": "Antioquia",
-                                    "ascii_name": "Antioquia",
-                                    "code": "CO.02"
+                                "name": "Antioquia",
+                                "ascii_name": "Antioquia",
+                                "code": "CO.02"
                                 },
                                 "geonames_admin2": {
-                                    "name": "Medellín",
-                                    "ascii_name": "Medellin",
-                                    "code": "CO.02.05001"
+                                "name": "Medellín",
+                                "ascii_name": "Medellin",
+                                "code": "CO.02.05001"
                                 },
                                 "license": {
-                                    "attribution": "Data from geonames.org under a CC-BY 3.0 license",
-                                    "license": "http://creativecommons.org/licenses/by/3.0/"
+                                "attribution": "Data from geonames.org under a CC-BY 3.0 license",
+                                "license": "http://creativecommons.org/licenses/by/3.0/"
                                 }
-                                },
-                                "email": ""
                             }
-                            ],
-                            "external_urls": [],
-                            "external_ids": [],
-                            "keywords": [],
-                            "subjects": []
+                            }
+                        ],
+                        "external_urls": [
+                            {
+                            "source": "wikipedia",
+                            "url": "http://en.wikipedia.org/wiki/University_of_Antioquia"
+                            },
+                            {
+                            "source": "site",
+                            "url": "http://www.udea.edu.co/portal/page/portal/EnglishPortal/EnglishPortal"
+                            }
+                        ],
+                        "external_ids": [
+                            {
+                            "source": "grid",
+                            "value": "grid.412881.6"
+                            },
+                            {
+                            "source": "isni",
+                            "value": "0000 0000 8882 5269"
+                            },
+                            {
+                            "source": "fundref",
+                            "value": "501100005278"
+                            },
+                            {
+                            "source": "orgref",
+                            "value": "2696975"
+                            },
+                            {
+                            "source": "wikidata",
+                            "value": "Q1258413"
+                            },
+                            {
+                            "source": "ror",
+                            "value": "https://ror.org/03bp5hc83"
+                            }
+                        ],
+                        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Escudo-UdeA.svg",
+                        "branches": []
                         }
-                        ]
+                    ]
                     }
-                    ],
-                    "keywords": [
-                    "appell's second hypergeometric function",
-                    "beta distribution",
-                    "confluent hypergeometric function"
-                    ],
-                    "external_ids": [
-                    {
-                        "source": "scopus",
-                        "value": "24179436300"
-                    }
-                    ],
-                    "branches": [
-                    {
-                        "name": "Facultad de Ciencias Exactas y Naturales",
-                        "type": "faculty",
-                        "id": "602c50d1fd74967db0663833"
-                    },
-                    {
-                        "name": "Instituto de matemáticas",
-                        "type": "department",
-                        "id": "602c50f9fd74967db0663858"
-                    },
-                    {
-                        "name": "Sin Grupo Asociado",
-                        "type": "group",
-                        "id": ""
-                    }
-                    ],
-                    "updated": 1613690757
-                },
-                {
-                    "_id": "5fc5b0a5b246cc0887190a69",
-                    "national_id": 279739,
-                    "full_name": "Daya Krishna Nagar",
-                    "first_names": "Daya  Krishna",
-                    "last_names": "Nagar",
-                    "initials": "DK",
-                    "aliases": [
-                    "daya k. nagar",
-                    "nagar d.k."
-                    ],
-                    "affiliations": [
-                    {
-                        "_id": "60120add4749273de616099f",
-                        "branches": []
-                    },
-                    {
-                        "_id": "602ef788728ecc2d8e62d4f0",
-                        "branches": []
-                    }
-                    ],
-                    "keywords": [
-                    "beta distribution",
-                    "bivariate distribution",
-                    "extended beta function"
-                    ],
-                    "external_ids": [
-                    {
-                        "source": "scopus",
-                        "value": "6701857476"
-                    }
-                    ],
-                    "branches": [
-                    {
-                        "name": "Facultad de Ciencias Exactas y Naturales",
-                        "type": "faculty",
-                        "id": "602c50d1fd74967db0663833"
-                    },
-                    {
-                        "name": "Instituto de matemáticas",
-                        "type": "department",
-                        "id": "602c50f9fd74967db0663858"
-                    },
-                    {
-                        "name": "Análisis Multivariado",
-                        "type": "group",
-                        "id": "602c510ffd74967db06638d6"
-                    }
-                    ],
-                    "updated": 1613690947
-                }
                 ],
-                "references_count": 11,
+                "references_count": 23,
                 "references": [],
-                "citations_count": 17,
-                "citations_link": "/scholar?cites=5920884288529496317&as_sdt=2005&sciodt=0,5&hl=en&oe=ASCII",
-                "citations": []
-            }
-            ]
+                "citations_count": 0,
+                "citations_link": "",
+                "citations": [],
+                "topics": [
+                    {
+                    "source": "lens",
+                    "topics": [
+                        "Humanities",
+                        "Stent",
+                        "St elevation myocardial infarction",
+                        "Medicine"
+                    ]
+                    }
+                ]
+                }
+            ],
+            "count": 2,
+            "page": 1,
+            "total_results": 25961
+        }
         """
         data = self.request.args.get('data')
         if not self.valid_apikey():
