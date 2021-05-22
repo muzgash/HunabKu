@@ -2,6 +2,7 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 from pickle import load
+from math import log
 
 class ColavFacultiesApp(HunabkuPluginBase):
     def __init__(self, hunabku):
@@ -291,6 +292,8 @@ class ColavFacultiesApp(HunabkuPluginBase):
                         "country_code":reg["affiliation"]["addresses"]["country_code"],
                         "count":reg["count"]
                     })
+        for item in countries:
+            item["log_count"]=log(item["count"])
         entry["geo"]=countries
                         
         filters={
