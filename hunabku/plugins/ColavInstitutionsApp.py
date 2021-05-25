@@ -279,6 +279,88 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         return {"data":entry,"filters":filters}
 
+    def get_graduates(self,idx=None,start_year=None,end_year=None):
+        self.db = self.dbclient["antioquia"]
+        initial_year=0
+        final_year=0
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            pipeline=[
+                {"$match":{"authors.affiliations.id":ObjectId(idx)}}
+            ]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+            if start_year and not end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif end_year and not start_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif start_year and end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+                
+        else:
+            pipeline=[]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+
+        entry={
+            "papers_count":1,
+            "institutions_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "countries_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "word_cloud":[{'x': 'colombia', 'value': 64}, {'x': 'using', 'value': 52}, {'x': 'patients', 'value': 46},
+            {'x': 'effect', 'value': 40}, {'x': 'study', 'value': 40}, {'x': 'analysis', 'value': 38}, {'x': 'colombian', 'value': 35},
+            {'x': 'associated', 'value': 35}, {'x': 'disease', 'value': 32}, {'x': 'properties', 'value': 27}, {'x': 'colombia.', 'value': 25},
+            {'x': 'clinical', 'value': 25}, {'x': 'human', 'value': 25}, {'x': 'cells', 'value': 24}, {'x': 'treatment', 'value': 23},
+            {'x': 'cell', 'value': 23}, {'x': 'infection', 'value': 22}, {'x': 'characterization', 'value': 22}, {'x': 'activity', 'value': 22},
+            {'x': 'review', 'value': 22}, {'x': 'pacientes', 'value': 22}, {'x': 'synthesis', 'value': 21}, {'x': 'acid', 'value': 20},
+            {'x': 'virus', 'value': 20}, {'x': 'high', 'value': 20}, {'x': 'systematic', 'value': 20}, {'x': 'role', 'value': 19},
+            {'x': 'model', 'value': 19}, {'x': 'tev', 'value': 19}, {'x': 'calidad', 'value': 18}, {'x': 'medellín,', 'value': 18}],
+            "count_by_type":{"Académico":1,"Gubernamental":1,"Social":1,"Productivo":1},
+            "geo": [{"country": "Colombia","country_code": "CO","count": 815,"log_count": 6.703188113240863},
+                    {"country": "Peru","country_code": "PE","count": 21,"log_count": 3.044522437723423},
+                    {"country": "Brazil","country_code": "BR","count": 33,"log_count": 3.4965075614664802}]
+        }
+
+        filters={
+            "start_year":initial_year,
+            "end_year":final_year
+        }
+
+        return {"data":entry,"filters":filters}
+
     def get_venn(self,venn_query):
         venn_source={
             "scholar":0,"lens":0,"scielo":0,"scopus":0,
@@ -647,6 +729,14 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                             found+=1
                 if found>0:
                     break
+        sorted_departments=sorted([{"id":key,"name":val["name"],"value":val["value"]} for key,val in entry["department"].items()],key=lambda x:x["value"],reverse=True)
+        entry["department"]=sorted_departments
+        sorted_groups=sorted([{"id":key,"name":val["name"],"value":val["value"]} for key,val in entry["group"].items()],key=lambda x:x["value"],reverse=True)
+        entry["group"]=sorted_groups
+        sorted_faculties=sorted([{"id":key,"name":val["name"],"value":val["value"]} for key,val in entry["faculty"].items()],key=lambda x:x["value"],reverse=True)
+        entry["faculty"]=sorted_faculties
+        sorted_publishers=sorted([{"name":key,"value":val} for key,val in entry["publisher"].items()],key=lambda x:x["value"],reverse=True)
+        entry["publisher"]=sorted_publishers
 
         filters={
             "start_year":initial_year,
@@ -1269,6 +1359,23 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             if apc:
                 response = self.app.response_class(
                 response=self.json.dumps(apc),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="graduates":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            graduates=self.get_graduates(idx,start_year,end_year)
+            if graduates:
+                response = self.app.response_class(
+                response=self.json.dumps(graduates),
                 status=200,
                 mimetype='application/json'
                 )

@@ -80,7 +80,10 @@ class ColavSearchApp(HunabkuPluginBase):
                 }
                 if "affiliations" in author.keys():
                     if len(author["affiliations"])>0:
-                        author["affiliations"][-1]
+                        entry["affiliation"]=author["affiliations"][-1]
+                        if "id" in entry["affiliation"].keys():
+                            affdb=self.db["institutions"].find_one({"_id":entry["affiliation"]["id"]})
+                            entry["affiliation"]["logo_url"]=affdb["logo_url"]
                 author_list.append(entry)
     
             return {"data":author_list,
@@ -523,7 +526,11 @@ class ColavSearchApp(HunabkuPluginBase):
             keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
             country = self.request.args.get('country') if "country" in self.request.args else ""
             result=self.search_institution(keywords=keywords,country=country,max_results=max_results,page=page)
-        elif data=="documents":
+        elif data=="literature":
+            max_results=self.request.args.get('max') if 'max' in self.request.args else 100
+            page=self.request.args.get('page') if 'page' in self.request.args else 1
+            keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
+            country = self.request.args.get('country') if "country" in self.request.args else ""
             result=self.search_documents(keywords=keywords,country=country,max_results=max_results,page=page)
         else:
             result=None

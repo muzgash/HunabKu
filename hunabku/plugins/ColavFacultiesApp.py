@@ -292,6 +292,8 @@ class ColavFacultiesApp(HunabkuPluginBase):
                         "country_code":reg["affiliation"]["addresses"]["country_code"],
                         "count":reg["count"]
                     })
+        sorted_geo=sorted(countries,key=lambda x:x["count"],reverse=True)
+        countries=sorted_geo
         for item in countries:
             item["log_count"]=log(item["count"])
         entry["geo"]=countries

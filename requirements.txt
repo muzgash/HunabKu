@@ -4,3 +4,4 @@ pandas>=1.0.1
 numpy>=1.18.1
 requests>=2.22.0
 joblib==0.14.1
+currencyconverter==0.15
