@@ -27,7 +27,7 @@ class ColavSearchApp(HunabkuPluginBase):
                 {"$group":{"_id":"$affiliation"}}
             ]
 
-        affiliations=[reg["_id"] for reg in self.db["authors"].aggregate(aff_pipeline)]
+        affiliations=[reg["_id"] for reg in self.db["authors"].aggregate(aff_pipeline) if "_id" in reg.keys()]
 
         countries=[]
         country_list=[]
@@ -265,18 +265,18 @@ class ColavSearchApp(HunabkuPluginBase):
         self.db = self.dbclient["antioquia"]
         if keywords:
             if country:
-                cursor=self.db['institutions'].find({"$text":{"$search":keywords},"addresses.country_code":country})
+                cursor=self.db['documents'].find({"$text":{"$search":keywords},"addresses.country_code":country})
             else:
-                cursor=self.db['institutions'].find({"$text":{"$search":keywords}})
+                cursor=self.db['documents'].find({"$text":{"$search":keywords}})
             country_pipeline=[{"$match":{"$text":{"$search":keywords}}}]
             aff_pipeline=[
                 {"$match":{"$text":{"$search":keywords}}}
             ]
         else:
             if country:
-                cursor=self.db['institutions'].find({"addresses.country_code":country})
+                cursor=self.db['documents'].find({"addresses.country_code":country})
             else:
-                cursor=self.db['institutions'].find()
+                cursor=self.db['documents'].find()
             country_pipeline=[]
             aff_pipeline=[]
 
@@ -325,6 +325,7 @@ class ColavSearchApp(HunabkuPluginBase):
         if cursor:
             paper_list=[]
             for paper in cursor:
+                print(paper["_id"],paper.keys())
                 entry={
                     "id":paper["_id"],
                     "title":paper["titles"][0]["title"],
@@ -334,22 +335,22 @@ class ColavSearchApp(HunabkuPluginBase):
                     "citations_count":paper["citations_count"]
                 }
 
-                source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+                source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
                 if source:
                     entry["source"]={"name":source["title"],"id":source["_id"]}
                 
                 authors=[]
                 for author in paper["authors"]:
-                    reg_au=self.db["authors"].find_one({"_id":author["_id"]})
+                    reg_au=self.db["authors"].find_one({"_id":author["id"]})
                     reg_aff=""
                     if author["affiliations"]:
-                        reg_aff=self.db["institutions"].find_one({"_id":author["affiliations"][0]["_id"]})
+                        reg_aff=self.db["institutions"].find_one({"_id":author["affiliations"][0]["id"]})
                     author_entry={
                         "id":reg_au["_id"],
                         "name":reg_au["full_name"],
                         "affiliation":""
                     }
-                    if  reg_aff:
+                    if reg_aff:
                         author_entry["affiliation"]={"id":reg_aff["_id"],"name":reg_aff["name"]}
                     authors.append(author_entry)
                 entry["authors"]=authors

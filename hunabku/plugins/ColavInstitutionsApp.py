@@ -361,6 +361,272 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         return {"data":entry,"filters":filters}
 
+    def get_invisible_colleges(self,idx=None,start_year=None,end_year=None):
+        self.db = self.dbclient["antioquia"]
+        initial_year=0
+        final_year=0
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            pipeline=[
+                {"$match":{"authors.affiliations.id":ObjectId(idx)}}
+            ]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+            if start_year and not end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif end_year and not start_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif start_year and end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+                
+        else:
+            pipeline=[]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+
+        entry=[
+            {
+                "words":["colombia","patients","effect"],
+                "papers_count":120,
+                "cites_count":300,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"2431c3t56cvh57",
+                "yearly_papers":{
+                    2007:34,
+                    2008:2,
+                    2009:44,
+                    2010:23,
+                    2011:12,
+                    2012:41,
+                    2013:75,
+                    2014:15,
+                    2015:24,
+                    2016:1,
+                    2017:31,
+                    2018:9,
+                    2019:11,
+                    2020:28}
+            },
+            {
+                "words":["colombia","study","properties"],
+                "papers_count":19,
+                "cites_count":56,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"2431c3t56cvh57",
+                "yearly_papers":{
+                    2007:1,
+                    2008:1,
+                    2009:3,
+                    2010:5,
+                    2011:13,
+                    2012:22,
+                    2013:1,
+                    2014:4,
+                    2015:8,
+                    2016:1,
+                    2017:1,
+                    2018:1,
+                    2019:3,
+                    2020:8}
+            },
+            {
+                "words":["analysis","disease","treatment"],
+                "papers_count":12,
+                "cites_count":30,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"2431c3t56cvh57",
+                "yearly_papers":{
+                    2007:4,
+                    2008:0,
+                    2009:4,
+                    2010:3,
+                    2011:2,
+                    2012:1,
+                    2013:5,
+                    2014:5,
+                    2015:4,
+                    2016:1,
+                    2017:1,
+                    2018:9,
+                    2019:1,
+                    2020:8}
+            },
+            {
+                "words":["clinical","infection","human"],
+                "papers_count":20,
+                "cites_count":10,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"2431c3t56cvh57",
+                "yearly_papers":{
+                    2007:4,
+                    2008:2,
+                    2009:4,
+                    2010:3,
+                    2011:1,
+                    2012:1,
+                    2013:7,
+                    2014:5,
+                    2015:2,
+                    2016:1,
+                    2017:1,
+                    2018:9,
+                    2019:11,
+                    2020:2}
+            },
+            {
+                "words":["colombia","human","rights"],
+                "papers_count":14,
+                "cites_count":30,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"2431c3t56cvh57",
+                "yearly_papers":{
+                    2007:3,
+                    2008:2,
+                    2009:4,
+                    2010:2,
+                    2011:1,
+                    2012:4,
+                    2013:7,
+                    2014:1,
+                    2015:2,
+                    2016:1,
+                    2017:3,
+                    2018:9,
+                    2019:1,
+                    2020:2}
+            },
+        ]
+
+        filters={
+            "start_year":initial_year,
+            "end_year":final_year
+        }
+
+        return {"data":entry,"filters":filters}
+    
+    def get_invisible_college_info(self,idx=None,icidx=None,start_year=None,end_year=None):
+        self.db = self.dbclient["antioquia"]
+        initial_year=0
+        final_year=0
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            pipeline=[
+                {"$match":{"authors.affiliations.id":ObjectId(idx)}}
+            ]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+            if start_year and not end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif end_year and not start_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif start_year and end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+                
+        else:
+            pipeline=[]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+
+        entry={
+            "citation_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "coauthors_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "geo":[{"country": "Colombia", "count": 5332, "country_code": "CO"}, {"country": "Switzerland", "count": 3314, "country_code": "CH"}, {"country": "Germany", "count": 3351, "country_code": "DE"}, {"country": "United Kingdom", "count": 2998, "country_code": "GB"}, {"country": "Belgium", "count": 2003, "country_code": "BE"}, {"country": "France", "count": 2695, "country_code": "FR"}, {"country": "Brazil", "count": 2579, "country_code": "BR"}, {"country": "Russia", "count": 1757, "country_code": "RU"}, {"country": "United States", "count": 19391, "country_code": "US"}, {"country": "Finland", "count": 573, "country_code": "FI"}, {"country": "Turkey", "count": 1096, "country_code": "TR"}, {"country": "India", "count": 1881, "country_code": "IN"}, {"country": "Cyprus", "count": 287, "country_code": "CY"}, {"country": "Greece", "count": 648, "country_code": "GR"}, {"country": "South Korea", "count": 1225, "country_code": "KR"}, {"country": "Italy", "count": 3375, "country_code": "IT"}, {"country": "Hungary", "count": 492, "country_code": "HU"}, {"country": "China", "count": 557, "country_code": "CN"}, {"country": "Spain", "count": 2975, "country_code": "ES"}, {"country": "Canada", "count": 893, "country_code": "CA"}, {"country": "Bulgaria", "count": 348, "country_code": "BG"}, {"country": "Croatia", "count": 183, "country_code": "HR"}, {"country": "Costa Rica", "count": 157, "country_code": "CR"}, {"country": "Serbia", "count": 147, "country_code": "RS"}, {"country": "Mexico", "count": 970, "country_code": "MX"}, {"country": "Poland", "count": 340, "country_code": "PL"}, {"country": "Chile", "count": 524, "country_code": "CL"}, {"country": "Taiwan", "count": 333, "country_code": "TW"}, {"country": "Peru", "count": 192, "country_code": "PE"}, {"country": "Netherlands", "count": 500, "country_code": "NL"}, {"country": "Lithuania", "count": 114, "country_code": "LT"}, {"country": "Czechia", "count": 114, "country_code": "CZ"}, {"country": "Pakistan", "count": 178, "country_code": "PK"}, {"country": "Thailand", "count": 121, "country_code": "TH"}, {"country": "Argentina", "count": 646, "country_code": "AR"}, {"country": "Malaysia", "count": 129, "country_code": "MY"}],
+            "institution_coauthorship_count":[
+                {
+                    "id": "60120ad04749273de615ff3d",
+                    "name": "Macquarie University",
+                    "logo": "",
+                    "count":2
+                },
+                {
+                    "id": "60120ad04749273de615ff46",
+                    "name": "University of Melbourne",
+                    "logo": "",
+                    "count":5
+                },
+                {
+                    "id": "606a5df2aa884b9a156456a2",
+                    "name": "UNAM",
+                    "logo": "",
+                    "count":12
+                }
+            ]
+        }
+        
+        filters={}
+
+        return {"data":entry,"filters":filters}
+
+
+
     def get_venn(self,venn_query):
         venn_source={
             "scholar":0,"lens":0,"scielo":0,"scopus":0,
@@ -1376,6 +1642,41 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             if graduates:
                 response = self.app.response_class(
                 response=self.json.dumps(graduates),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="colleges":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            colleges=self.get_invisible_colleges(idx,start_year,end_year)
+            if colleges:
+                response = self.app.response_class(
+                response=self.json.dumps(colleges),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="college":
+            idx = self.request.args.get('id')
+            icidx = self.request.args.get('icid')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            college=self.get_invisible_college_info(idx,icidx,start_year,end_year)
+            if college:
+                response = self.app.response_class(
+                response=self.json.dumps(college),
                 status=200,
                 mimetype='application/json'
                 )
