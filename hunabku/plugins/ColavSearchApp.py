@@ -571,7 +571,7 @@ class ColavSearchApp(HunabkuPluginBase):
             start_year=self.request.args.get('start_year')
             end_year=self.request.args.get('end_year')
             sort=self.request.args.get('sort')
-            result=self.search_documents(keywords=keywords,country=country,max_results=max_results,page=page,star_year=start_year,end_year=end_year,sort=sort,direction="descending")
+            result=self.search_documents(keywords=keywords,country=country,max_results=max_results,page=page,start_year=start_year,end_year=end_year,sort=sort,direction="descending")
         else:
             result=None
         if result:
