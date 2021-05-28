@@ -261,9 +261,33 @@ class ColavSearchApp(HunabkuPluginBase):
         else:
             return None
 
-    def search_documents(self,keywords="",country="",max_results=100,page=1):
+    def search_documents(self,keywords="",country="",max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
         self.db = self.dbclient["antioquia"]
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+
         if keywords:
+            result=self.db['documents'].find({"$text":{"$search":keywords}},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({"$text":{"$search":keywords}},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
             if country:
                 cursor=self.db['documents'].find({"$text":{"$search":keywords},"addresses.country_code":country})
             else:
@@ -322,6 +346,15 @@ class ColavSearchApp(HunabkuPluginBase):
                 return None
         cursor=cursor.skip(max_results*(page-1)).limit(max_results)
 
+        if sort=="citations" and direction=="ascending":
+            cursor.sort([("citations_count",ASCENDING)])
+        if sort=="citations" and direction=="descending":
+            cursor.sort([("citations_count",DESCENDING)])
+        if sort=="year" and direction=="ascending":
+            cursor.sort([("year_published",ASCENDING)])
+        if sort=="year" and direction=="descending":
+            cursor.sort([("year_published",DESCENDING)])
+
         if cursor:
             paper_list=[]
             for paper in cursor:
@@ -361,7 +394,9 @@ class ColavSearchApp(HunabkuPluginBase):
             return {"data":paper_list,
                     "filters":{
                         "keywords":[],
-                        "countries":countries
+                        "countries":countries,
+                        "start_year":initial_year,
+                        "end_year":final_year
                     },
                     "count":len(paper_list),
                     "page":page,
@@ -533,7 +568,10 @@ class ColavSearchApp(HunabkuPluginBase):
             page=self.request.args.get('page') if 'page' in self.request.args else 1
             keywords = self.request.args.get('keywords') if "keywords" in self.request.args else ""
             country = self.request.args.get('country') if "country" in self.request.args else ""
-            result=self.search_documents(keywords=keywords,country=country,max_results=max_results,page=page)
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            sort=self.request.args.get('sort')
+            result=self.search_documents(keywords=keywords,country=country,max_results=max_results,page=page,star_year=start_year,end_year=end_year,sort=sort,direction="descending")
         else:
             result=None
         if result:
