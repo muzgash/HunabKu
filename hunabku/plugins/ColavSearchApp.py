@@ -331,6 +331,7 @@ class ColavSearchApp(HunabkuPluginBase):
                     "title":paper["titles"][0]["title"],
                     "authors":[],
                     "source":"",
+                    "open_access_status":paper["open_access_status"],
                     "year_published":paper["year_published"],
                     "citations_count":paper["citations_count"]
                 }
