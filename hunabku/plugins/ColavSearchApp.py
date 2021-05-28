@@ -263,6 +263,8 @@ class ColavSearchApp(HunabkuPluginBase):
 
     def search_documents(self,keywords="",country="",max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
         self.db = self.dbclient["antioquia"]
+        initial_year=0
+        final_year=0
 
         if start_year:
             try:
