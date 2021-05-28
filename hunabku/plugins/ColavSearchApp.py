@@ -348,7 +348,7 @@ class ColavSearchApp(HunabkuPluginBase):
                         reg_aff=self.db["institutions"].find_one({"_id":author["affiliations"][0]["id"]})
                     author_entry={
                         "id":reg_au["_id"],
-                        "name":reg_au["full_name"],
+                        "full_name":reg_au["full_name"],
                         "affiliation":""
                     }
                     if reg_aff:
