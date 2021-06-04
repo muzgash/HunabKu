@@ -366,7 +366,6 @@ class ColavAuthorsApi(HunabkuPluginBase):
                 "authors": [
                 {
                     "_id": "5fc5b0a5b246cc0887190a69",
-                    "national_id": 279739,
                     "full_name": "Daya Krishna Nagar",
                     "first_names": "Daya  Krishna",
                     "last_names": "Nagar",
@@ -634,7 +633,6 @@ class ColavAuthorsApi(HunabkuPluginBase):
                 },
                 {
                     "_id": "5fc5bebab246cc0887190a70",
-                    "national_id": 43463670,
                     "full_name": "Johanna Marcela Orozco Castañeda",
                     "first_names": "Johanna Marcela",
                     "last_names": "Orozco Castañeda",
@@ -807,7 +805,6 @@ class ColavAuthorsApi(HunabkuPluginBase):
                 },
                 {
                     "_id": "5fc5b0a5b246cc0887190a69",
-                    "national_id": 279739,
                     "full_name": "Daya Krishna Nagar",
                     "first_names": "Daya  Krishna",
                     "last_names": "Nagar",

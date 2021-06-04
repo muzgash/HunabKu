@@ -75,8 +75,7 @@ class ColavSearchApp(HunabkuPluginBase):
                 entry={
                     "id":author["_id"],
                     "full_name":author["full_name"],
-                    "affiliation":[],
-                    "keywords":author["keywords"]
+                    "affiliation":[]
                 }
                 if "affiliations" in author.keys():
                     if len(author["affiliations"])>0:

@@ -4,6 +4,7 @@ from pymongo import ASCENDING,DESCENDING
 from pickle import load
 from currency_converter import CurrencyConverter
 from datetime import date
+from math import log
 
 class ColavInstitutionsApp(HunabkuPluginBase):
     def __init__(self, hunabku):
@@ -221,6 +222,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         pipeline.extend([
             {"$unwind":"$authors"},
+            {"$unwind":"$authors.affiliations"},
             {"$group":{"_id":"$authors.affiliations.id","count":{"$sum":1}}},
             {"$sort":{"count":-1}},
             {"$unwind":"$_id"},
@@ -269,6 +271,10 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                         "country_code":reg["affiliation"]["addresses"]["country_code"],
                         "count":reg["count"]
                     })
+        sorted_geo=sorted(countries,key=lambda x:x["count"],reverse=True)
+        countries=sorted_geo
+        for item in countries:
+            item["log_count"]=log(item["count"])
         entry["geo"]=countries
 
         

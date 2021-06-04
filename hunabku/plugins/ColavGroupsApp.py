@@ -2,6 +2,7 @@ from hunabku.HunabkuBase import HunabkuPluginBase, endpoint
 from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 from pickle import load
+from math import log
 
 class ColavGroupsApp(HunabkuPluginBase):
     def __init__(self, hunabku):
@@ -219,6 +220,7 @@ class ColavGroupsApp(HunabkuPluginBase):
 
         pipeline.extend([
             {"$unwind":"$authors"},
+            {"$unwind":"$authors.affiliations"},
             {"$group":{"_id":"$authors.id","count":{"$sum":1}}},
             {"$sort":{"count":-1}},
             {"$lookup":{"from":"authors","localField":"_id","foreignField":"_id","as":"author"}},
@@ -267,6 +269,10 @@ class ColavGroupsApp(HunabkuPluginBase):
                         "country_code":reg["affiliation"]["addresses"]["country_code"],
                         "count":reg["count"]
                     })
+        sorted_geo=sorted(countries,key=lambda x:x["count"],reverse=True)
+        countries=sorted_geo
+        for item in countries:
+            item["log_count"]=log(item["count"])
         entry["geo"]=countries
                         
         filters={

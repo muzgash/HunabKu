@@ -243,6 +243,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
 
         pipeline.extend([
             {"$unwind":"$authors"},
+            {"$unwind":"$authors.affiliations"},
             {"$group":{"_id":"$authors.id","count":{"$sum":1}}},
             {"$sort":{"count":-1}},
             {"$lookup":{"from":"authors","localField":"_id","foreignField":"_id","as":"author"}},
