@@ -430,7 +430,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 "papers_count":120,
                 "cites_count":300,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
-                "icid":"2431c3t56cvh57",
+                "icid":"243ab4565bygcvh57",
                 "yearly_papers":{
                     2007:34,
                     2008:2,
@@ -452,7 +452,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 "papers_count":19,
                 "cites_count":56,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
-                "icid":"2431c3t56cvh57",
+                "icid":"24b54574h57",
                 "yearly_papers":{
                     2007:1,
                     2008:1,
@@ -474,7 +474,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 "papers_count":12,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
-                "icid":"2431c3t56cvh57",
+                "icid":"2431h45675cvh57",
                 "yearly_papers":{
                     2007:4,
                     2008:0,
@@ -496,7 +496,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 "papers_count":20,
                 "cites_count":10,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
-                "icid":"2431c3t56cvh57",
+                "icid":"243vrrwecvh57",
                 "yearly_papers":{
                     2007:4,
                     2008:2,
@@ -518,7 +518,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 "papers_count":14,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
-                "icid":"2431c3t56cvh57",
+                "icid":"2431c3t56fgwec7",
                 "yearly_papers":{
                     2007:3,
                     2008:2,
