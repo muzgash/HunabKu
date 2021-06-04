@@ -412,48 +412,48 @@ class ColavAuthorsApp(HunabkuPluginBase):
                 print("Could not convert end year to int")
                 return None
         if idx:
-            result=self.db['documents'].find({"authors._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     initial_year=result[0]["year_published"]
-            result=self.db['documents'].find({"authors._id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            result=self.db['documents'].find({"authors.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     final_year=result[0]["year_published"]
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})
-                venn_query={"year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.id":ObjectId(idx)})
+                venn_query={"year_published":{"$gte":start_year},"authors.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year},"authors.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year},"authors.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year},"authors.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year},"authors.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year},"authors.id":ObjectId(idx)})}
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})
-                venn_query={"year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.id":ObjectId(idx)})
+                venn_query={"year_published":{"$lte":end_year},"authors.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$lte":end_year},"authors.id":ObjectId(idx)})}
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})
-                venn_query={"year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)})
+                venn_query={"year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","year_published":{"$gte":start_year,"$lte":end_year},"authors.id":ObjectId(idx)})}
             else:
-                cursor=self.db['documents'].find({"authors._id":ObjectId(idx)})
-                venn_query={"authors._id":ObjectId(idx)}
-                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors._id":ObjectId(idx)}),
-                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors._id":ObjectId(idx)}),
-                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors._id":ObjectId(idx)}),
-                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors._id":ObjectId(idx)}),
-                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors._id":ObjectId(idx)})}
+                cursor=self.db['documents'].find({"authors.id":ObjectId(idx)})
+                venn_query={"authors.id":ObjectId(idx)}
+                open_access={"green":self.db['documents'].count_documents({"open_access_status":"green","authors.id":ObjectId(idx)}),
+                    "gold":self.db['documents'].count_documents({"open_access_status":"gold","authors.id":ObjectId(idx)}),
+                    "bronze":self.db['documents'].count_documents({"open_access_status":"bronze","authors.id":ObjectId(idx)}),
+                    "closed":self.db['documents'].count_documents({"open_access_status":"closed","authors.id":ObjectId(idx)}),
+                    "hybrid":self.db['documents'].count_documents({"open_access_status":"hybrid","authors.id":ObjectId(idx)})}
         else:
             cursor=self.db['documents'].find()
             venn_query={}
@@ -494,27 +494,28 @@ class ColavAuthorsApp(HunabkuPluginBase):
                 "open_access_status":paper["open_access_status"]
             }
 
-            source=self.db["sources"].find_one({"_id":paper["source"]["_id"]})
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
             if source:
-                entry["source"]={"name":source["title"],"_id":str(source["_id"])}
+                entry["source"]={"name":source["title"],"id":str(source["_id"])}
             authors=[]
             for author in paper["authors"]:
                 au_entry={}
-                author_db=self.db["authors"].find_one({"_id":author["_id"]})
+                author_db=self.db["authors"].find_one({"_id":author["id"]})
                 if author_db:
                     au_entry={"full_name":author_db["full_name"],"_id":author_db["_id"]}
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry={}
-                    aff_db=self.db["institutions"].find_one({"_id":aff["_id"]})
+                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
                         aff_entry={"name":aff_db["name"],"_id":aff_db["_id"]}
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
-                            branch_db=self.db["branches"].find_one({"_id":branch["_id"]})
-                            if branch_db:
-                                branches.append({"name":branch_db["name"],"type":branch_db["type"],"_id":branch_db["_id"]})
+                            if "id" in branch.keys():
+                                branch_db=self.db["branches"].find_one({"_id":branch["id"]})
+                                if branch_db:
+                                    branches.append({"name":branch_db["name"],"type":branch_db["type"],"id":branch_db["_id"]})
                     aff_entry["branches"]=branches
                     affiliations.append(aff_entry)
                 au_entry["affiliations"]=affiliations
