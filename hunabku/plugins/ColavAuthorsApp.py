@@ -502,13 +502,13 @@ class ColavAuthorsApp(HunabkuPluginBase):
                 au_entry={}
                 author_db=self.db["authors"].find_one({"_id":author["id"]})
                 if author_db:
-                    au_entry={"full_name":author_db["full_name"],"_id":author_db["_id"]}
+                    au_entry={"full_name":author_db["full_name"],"id":author_db["_id"]}
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry={}
                     aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
-                        aff_entry={"name":aff_db["name"],"_id":aff_db["_id"]}
+                        aff_entry={"name":aff_db["name"],"id":aff_db["_id"]}
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
