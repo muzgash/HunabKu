@@ -130,41 +130,41 @@ class ColavDepartmentsApp(HunabkuPluginBase):
         pipeline.extend([
             {"$project":{
                 "_id":0,"year_published":1,"citations_count":1
-            }},
-            {"$group":{
-                "_id":"$year_published",
-                "citations_year":{"$push":"$citations_count"}
-            }},
-            {"$sort":{
-                "_id":-1
-            }},
+            }}
         ])
 
         cites5_list=[]
         cites_list=[]
+        now=date.today()
         for idx,reg in enumerate(self.db["documents"].aggregate(pipeline)):
-            cites_list.extend(reg["citations_year"])
-            if idx<5:
-                cites5_list.extend(reg["citations_year"])
+            if reg["year_published"]<now.year:
+                cites_list.append(reg["citations_count"])
+                if reg["year_published"]>now.year-5:
+                    cites5_list.append(reg["citations_count"])
         entry["H5"]=self.hindex(cites5_list)
         entry["H"]=self.hindex(cites_list)
 
         cites_pipeline.extend([
-            {"$project":{
-                "_id":0,"year_published":1,"citations_count":1
-            }},
+            {"$unwind":"$citations"},
+            {"$lookup":{
+                "from":"documents",
+                "localField":"citations",
+                "foreignField":"_id",
+                "as":"citation"}
+            },
+            {"$unwind":"$citation"},
+            {"$project":{"citation.year_published":1}},
             {"$group":{
-                "_id":"$year_published",
-                "citations_year":{"$push":"$citations_count"}
-            }},
+                "_id":"$citation.year_published","count":{"$sum":1}}
+            },
             {"$sort":{
                 "_id":-1
-            }},
+            }}
         ])
 
         for idx,reg in enumerate(self.db["documents"].aggregate(cites_pipeline)):
-            entry["citations"]+=sum([num for num in reg["citations_year"] if num!=""])
-            entry["yearly_citations"][reg["_id"]]=sum(reg["citations_year"])
+            entry["citations"]+=reg["count"]
+            entry["yearly_citations"][reg["_id"]]=reg["count"]
 
         filters={
             "start_year":initial_year,

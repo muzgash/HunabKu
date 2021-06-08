@@ -118,43 +118,41 @@ class ColavInstitutionsApp(HunabkuPluginBase):
         pipeline.extend([
             {"$project":{
                 "_id":0,"year_published":1,"citations_count":1
-            }},
-            {"$group":{
-                "_id":"$year_published",
-                "citations_year":{"$push":"$citations_count"}
-            }},
-            {"$sort":{
-                "_id":-1
-            }},
+            }}
         ])
 
         cites5_list=[]
         cites_list=[]
+        now=date.today()
         for idx,reg in enumerate(self.db["documents"].aggregate(pipeline)):
-            cites_list.extend(reg["citations_year"])
-            if idx<5:
-                cites5_list.extend(reg["citations_year"])
-        print(cites5_list)
-        print(cites_list)
+            if reg["year_published"]<now.year:
+                cites_list.append(reg["citations_count"])
+                if reg["year_published"]>now.year-5:
+                    cites5_list.append(reg["citations_count"])
         entry["H5"]=self.hindex(cites5_list)
         entry["H"]=self.hindex(cites_list)
 
         cites_pipeline.extend([
-            {"$project":{
-                "_id":0,"year_published":1,"citations_count":1
-            }},
+            {"$unwind":"$citations"},
+            {"$lookup":{
+                "from":"documents",
+                "localField":"citations",
+                "foreignField":"_id",
+                "as":"citation"}
+            },
+            {"$unwind":"$citation"},
+            {"$project":{"citation.year_published":1}},
             {"$group":{
-                "_id":"$year_published",
-                "citations_year":{"$push":"$citations_count"}
-            }},
+                "_id":"$citation.year_published","count":{"$sum":1}}
+            },
             {"$sort":{
                 "_id":-1
-            }},
+            }}
         ])
 
         for idx,reg in enumerate(self.db["documents"].aggregate(cites_pipeline)):
-            entry["citations"]+=sum([num for num in reg["citations_year"] if num!=""])
-            entry["yearly_citations"][reg["_id"]]=sum(reg["citations_year"])
+            entry["citations"]+=reg["count"]
+            entry["yearly_citations"][reg["_id"]]=reg["count"]
 
         filters={
             "start_year":initial_year,
@@ -344,7 +342,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         entry=[
             {
-                "words":["colombia","patients","effect"],
+                "words":[{"x":"colombia","value":45},{"x":"patients","value":32},{"x":"effect","value":30}],
                 "papers_count":120,
                 "cites_count":300,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -366,7 +364,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:28}
             },
             {
-                "words":["colombia","study","properties"],
+                "words":[{"x":"colombia","value":45},{"x":"study","value":32},{"x":"properties","value":30}],
                 "papers_count":19,
                 "cites_count":56,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -388,7 +386,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":["analysis","disease","treatment"],
+                "words":[{"x":"analysis","value":45},{"x":"disease","value":12},{"x":"treatment","value":5}],
                 "papers_count":12,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -410,7 +408,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":["clinical","infection","human"],
+                "words":[{"x":"clinical","value":45},{"x":"infection","value":12},{"x":"human","value":5}],
                 "papers_count":20,
                 "cites_count":10,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -432,7 +430,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:2}
             },
             {
-                "words":["colombia","human","rights"],
+                "words":[{"x":"colombia","value":75},{"x":"human","value":40},{"x":"rights","value":5}],
                 "papers_count":14,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -603,7 +601,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         entry=[
             {
-                "words":["colombia","patients","effect"],
+                "words":[{"x":"colombia","value":45},{"x":"patients","value":32},{"x":"effect","value":30}],
                 "papers_count":120,
                 "cites_count":300,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -625,7 +623,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:28}
             },
             {
-                "words":["colombia","study","properties"],
+                "words":[{"x":"colombia","value":45},{"x":"study","value":32},{"x":"properties","value":30}],
                 "papers_count":19,
                 "cites_count":56,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -647,7 +645,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":["analysis","disease","treatment"],
+                "words":[{"x":"analysis","value":45},{"x":"disease","value":12},{"x":"treatment","value":5}],
                 "papers_count":12,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -669,7 +667,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":["clinical","infection","human"],
+                "words":[{"x":"clinical","value":45},{"x":"infection","value":12},{"x":"human","value":5}],
                 "papers_count":20,
                 "cites_count":10,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -691,7 +689,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:2}
             },
             {
-                "words":["colombia","human","rights"],
+                "words":[{"x":"colombia","value":75},{"x":"human","value":40},{"x":"rights","value":5}],
                 "papers_count":14,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
