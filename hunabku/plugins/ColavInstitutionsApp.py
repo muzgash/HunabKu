@@ -285,7 +285,184 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         return {"data":entry,"filters":filters}
 
-    def get_graduates(self,idx=None,start_year=None,end_year=None):
+    def get_graduates_colleges(self,idx=None,start_year=None,end_year=None):
+        self.db = self.dbclient["antioquia"]
+        initial_year=0
+        final_year=0
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            pipeline=[
+                {"$match":{"authors.affiliations.id":ObjectId(idx)}}
+            ]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+            if start_year and not end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif end_year and not start_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+            elif start_year and end_year:
+                pipeline=[
+                    {"$match":{"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)}}
+                ]
+                
+        else:
+            pipeline=[]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    initial_year=result[0]["year_published"]
+            result=self.db['documents'].find({},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            if result:
+                result=list(result)
+                if len(result)>0:
+                    final_year=result[0]["year_published"]
+
+        entry=[
+            {
+                "words":["colombia","patients","effect"],
+                "papers_count":120,
+                "cites_count":300,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"243ab4565bygcvh57",
+                "yearly_papers":{
+                    2007:34,
+                    2008:2,
+                    2009:44,
+                    2010:23,
+                    2011:12,
+                    2012:41,
+                    2013:75,
+                    2014:15,
+                    2015:24,
+                    2016:1,
+                    2017:31,
+                    2018:9,
+                    2019:11,
+                    2020:28}
+            },
+            {
+                "words":["colombia","study","properties"],
+                "papers_count":19,
+                "cites_count":56,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"24b54574h57",
+                "yearly_papers":{
+                    2007:1,
+                    2008:1,
+                    2009:3,
+                    2010:5,
+                    2011:13,
+                    2012:22,
+                    2013:1,
+                    2014:4,
+                    2015:8,
+                    2016:1,
+                    2017:1,
+                    2018:1,
+                    2019:3,
+                    2020:8}
+            },
+            {
+                "words":["analysis","disease","treatment"],
+                "papers_count":12,
+                "cites_count":30,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"2431h45675cvh57",
+                "yearly_papers":{
+                    2007:4,
+                    2008:0,
+                    2009:4,
+                    2010:3,
+                    2011:2,
+                    2012:1,
+                    2013:5,
+                    2014:5,
+                    2015:4,
+                    2016:1,
+                    2017:1,
+                    2018:9,
+                    2019:1,
+                    2020:8}
+            },
+            {
+                "words":["clinical","infection","human"],
+                "papers_count":20,
+                "cites_count":10,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"243vrrwecvh57",
+                "yearly_papers":{
+                    2007:4,
+                    2008:2,
+                    2009:4,
+                    2010:3,
+                    2011:1,
+                    2012:1,
+                    2013:7,
+                    2014:5,
+                    2015:2,
+                    2016:1,
+                    2017:1,
+                    2018:9,
+                    2019:11,
+                    2020:2}
+            },
+            {
+                "words":["colombia","human","rights"],
+                "papers_count":14,
+                "cites_count":30,
+                "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
+                "icid":"2431c3t56fgwec7",
+                "yearly_papers":{
+                    2007:3,
+                    2008:2,
+                    2009:4,
+                    2010:2,
+                    2011:1,
+                    2012:4,
+                    2013:7,
+                    2014:1,
+                    2015:2,
+                    2016:1,
+                    2017:3,
+                    2018:9,
+                    2019:1,
+                    2020:2}
+            },
+        ]
+
+        filters={
+            "start_year":initial_year,
+            "end_year":final_year
+        }
+
+        return {"data":entry,"filters":filters}
+
+    def get_graduates(self,idx=None,icidx=None,start_year=None,end_year=None):
         self.db = self.dbclient["antioquia"]
         initial_year=0
         final_year=0
@@ -1640,23 +1817,6 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 status=204,
                 mimetype='application/json'
                 )
-        elif data=="graduates":
-            idx = self.request.args.get('id')
-            start_year=self.request.args.get('start_year')
-            end_year=self.request.args.get('end_year')
-            graduates=self.get_graduates(idx,start_year,end_year)
-            if graduates:
-                response = self.app.response_class(
-                response=self.json.dumps(graduates),
-                status=200,
-                mimetype='application/json'
-                )
-            else:
-                response = self.app.response_class(
-                response=self.json.dumps({"status":"Request returned empty"}),
-                status=204,
-                mimetype='application/json'
-                )
         elif data=="colleges":
             idx = self.request.args.get('id')
             start_year=self.request.args.get('start_year')
@@ -1683,6 +1843,41 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             if college:
                 response = self.app.response_class(
                 response=self.json.dumps(college),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="graduates_colleges":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            graduates_colleges=self.get_graduates_colleges(idx,start_year,end_year)
+            if graduates_colleges:
+                response = self.app.response_class(
+                response=self.json.dumps(graduates_colleges),
+                status=200,
+                mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="graduates":
+            idx = self.request.args.get('id')
+            icidx = self.request.args.get('icid')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            graduates=self.get_graduates(idx,icidx,start_year,end_year)
+            if graduates:
+                response = self.app.response_class(
+                response=self.json.dumps(graduates),
                 status=200,
                 mimetype='application/json'
                 )
