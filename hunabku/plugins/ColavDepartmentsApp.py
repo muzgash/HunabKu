@@ -3,6 +3,7 @@ from bson import ObjectId
 from pymongo import ASCENDING,DESCENDING
 from pickle import load
 from math import log
+from datetime import date
 
 class ColavDepartmentsApp(HunabkuPluginBase):
     def __init__(self, hunabku):
