@@ -342,7 +342,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         entry=[
             {
-                "words":[{"x":"colombia","value":45},{"x":"patients","value":32},{"x":"effect","value":30}],
+                "words":[{"x":"clinical","value":45},
+                        {"x":"infection","value":12},
+                        {"x":"human","value":8},
+                        {"x":"review","value":8},
+                        {"x":"vaccine","value":5}],
                 "papers_count":120,
                 "cites_count":300,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -364,7 +368,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:28}
             },
             {
-                "words":[{"x":"colombia","value":45},{"x":"study","value":32},{"x":"properties","value":30}],
+                "words":[{"x":"analysis","value":45},
+                        {"x":"disease","value":22},
+                        {"x":"treatment","value":20},
+                        {"x":"model","value":12},
+                        {"x":"natural","value":2}],
                 "papers_count":19,
                 "cites_count":56,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -386,7 +394,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":[{"x":"analysis","value":45},{"x":"disease","value":12},{"x":"treatment","value":5}],
+                "words":[{"x":"colombia","value":45},
+                        {"x":"study","value":32},
+                        {"x":"properties","value":30},
+                        {"x":"characterization","value":18},
+                        {"x":"activity","value":10}],
                 "papers_count":12,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -408,7 +420,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":[{"x":"clinical","value":45},{"x":"infection","value":12},{"x":"human","value":5}],
+                "words":[{"x":"colombia","value":45},
+                        {"x":"patients","value":32},
+                        {"x":"effect","value":30},
+                        {"x":"infection","value":28},
+                        {"x":"factors","value":12}],
                 "papers_count":20,
                 "cites_count":10,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -430,7 +446,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:2}
             },
             {
-                "words":[{"x":"colombia","value":75},{"x":"human","value":40},{"x":"rights","value":5}],
+                "words":[{"x":"colombia","value":75},
+                        {"x":"human","value":40},
+                        {"x":"rights","value":15},
+                        {"x":"property","value":8},
+                        {"x":"case","value":8}],
                 "papers_count":14,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -601,7 +621,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         entry=[
             {
-                "words":[{"x":"colombia","value":45},{"x":"patients","value":32},{"x":"effect","value":30}],
+                "words":[{"x":"colombia","value":45},
+                        {"x":"patients","value":32},
+                        {"x":"effect","value":30},
+                        {"x":"infection","value":28},
+                        {"x":"factors","value":12}],
                 "papers_count":120,
                 "cites_count":300,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -623,7 +647,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:28}
             },
             {
-                "words":[{"x":"colombia","value":45},{"x":"study","value":32},{"x":"properties","value":30}],
+                "words":[{"x":"colombia","value":45},
+                        {"x":"study","value":32},
+                        {"x":"properties","value":30},
+                        {"x":"characterization","value":18},
+                        {"x":"activity","value":10}],
                 "papers_count":19,
                 "cites_count":56,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -645,7 +673,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":[{"x":"analysis","value":45},{"x":"disease","value":12},{"x":"treatment","value":5}],
+                "words":[{"x":"analysis","value":45},
+                        {"x":"disease","value":22},
+                        {"x":"treatment","value":20},
+                        {"x":"model","value":12},
+                        {"x":"natural","value":2}],
                 "papers_count":12,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -667,7 +699,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:8}
             },
             {
-                "words":[{"x":"clinical","value":45},{"x":"infection","value":12},{"x":"human","value":5}],
+                "words":[{"x":"clinical","value":45},
+                        {"x":"infection","value":12},
+                        {"x":"human","value":8},
+                        {"x":"review","value":8},
+                        {"x":"vaccine","value":5}],
                 "papers_count":20,
                 "cites_count":10,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
@@ -689,7 +725,11 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2020:2}
             },
             {
-                "words":[{"x":"colombia","value":75},{"x":"human","value":40},{"x":"rights","value":5}],
+                "words":[{"x":"colombia","value":75},
+                        {"x":"human","value":40},
+                        {"x":"rights","value":15},
+                        {"x":"property","value":8},
+                        {"x":"case","value":8}],
                 "papers_count":14,
                 "cites_count":30,
                 "affiliation":{"name":"Universidad de Antioquia","id":ObjectId("60120afa4749273de6161883")},
