@@ -283,7 +283,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         return {"data":entry,"filters":filters}
 
-    def get_graduates_colleges(self,idx=None,start_year=None,end_year=None):
+    def get_graduates_info(self,idx=None,start_year=None,end_year=None):
         self.db = self.dbclient["antioquia"]
         initial_year=0
         final_year=0
@@ -340,8 +340,15 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 if len(result)>0:
                     final_year=result[0]["year_published"]
 
-        entry=[
-            {
+        entry={
+            "papers_count":111,
+            "geo": [{"country": "Colombia","country_code": "CO","count": 815,"log_count": 6.703188113240863},
+                    {"country": "Peru","country_code": "PE","count": 21,"log_count": 3.044522437723423},
+                    {"country": "Brazil","country_code": "BR","count": 33,"log_count": 3.4965075614664802}],
+            "institutions_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "countries_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "count_by_type":{"Académico":1,"Gubernamental":1,"Social":1,"Productivo":1},
+            "colleges":[{
                 "words":[{"x":"clinical","value":45},
                         {"x":"infection","value":12},
                         {"x":"human","value":8},
@@ -471,7 +478,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     2019:1,
                     2020:2}
             },
-        ]
+        ]}
 
         filters={
             "start_year":initial_year,
@@ -480,7 +487,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
 
         return {"data":entry,"filters":filters}
 
-    def get_graduates_info(self,idx=None,icidx=None,start_year=None,end_year=None):
+    def get_graduates_college(self,idx=None,icidx=None,start_year=None,end_year=None):
         self.db = self.dbclient["antioquia"]
         initial_year=0
         final_year=0
@@ -538,9 +545,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                     final_year=result[0]["year_published"]
 
         entry={
-            "papers_count":1,
-            "institutions_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
-            "countries_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
+            "coauthors_network":{"nodes":load(open("./nodes.p","rb")),"edges":load(open("./edges.p","rb"))},
             "word_cloud":[{'x': 'colombia', 'value': 64}, {'x': 'using', 'value': 52}, {'x': 'patients', 'value': 46},
             {'x': 'effect', 'value': 40}, {'x': 'study', 'value': 40}, {'x': 'analysis', 'value': 38}, {'x': 'colombian', 'value': 35},
             {'x': 'associated', 'value': 35}, {'x': 'disease', 'value': 32}, {'x': 'properties', 'value': 27}, {'x': 'colombia.', 'value': 25},
@@ -548,11 +553,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
             {'x': 'cell', 'value': 23}, {'x': 'infection', 'value': 22}, {'x': 'characterization', 'value': 22}, {'x': 'activity', 'value': 22},
             {'x': 'review', 'value': 22}, {'x': 'pacientes', 'value': 22}, {'x': 'synthesis', 'value': 21}, {'x': 'acid', 'value': 20},
             {'x': 'virus', 'value': 20}, {'x': 'high', 'value': 20}, {'x': 'systematic', 'value': 20}, {'x': 'role', 'value': 19},
-            {'x': 'model', 'value': 19}, {'x': 'tev', 'value': 19}, {'x': 'calidad', 'value': 18}, {'x': 'medellín,', 'value': 18}],
-            "count_by_type":{"Académico":1,"Gubernamental":1,"Social":1,"Productivo":1},
-            "geo": [{"country": "Colombia","country_code": "CO","count": 815,"log_count": 6.703188113240863},
-                    {"country": "Peru","country_code": "PE","count": 21,"log_count": 3.044522437723423},
-                    {"country": "Brazil","country_code": "BR","count": 33,"log_count": 3.4965075614664802}]
+            {'x': 'model', 'value': 19}, {'x': 'tev', 'value': 19}, {'x': 'calidad', 'value': 18}, {'x': 'medellín,', 'value': 18}]
         }
 
         filters={
