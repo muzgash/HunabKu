@@ -5,6 +5,8 @@ from pickle import load
 from currency_converter import CurrencyConverter
 from datetime import date
 from math import log
+from cpi import inflate
+from flask import redirect
 
 class ColavInstitutionsApp(HunabkuPluginBase):
     def __init__(self, hunabku):
@@ -238,7 +240,7 @@ class ColavInstitutionsApp(HunabkuPluginBase):
         entry["institutions"]=[
             {"name":reg["affiliation"]["name"],"id":reg["_id"],"count":reg["count"]} for reg in self.db["documents"].aggregate(pipeline) if str(reg["_id"]) != idx
         ]
-        
+    
         countries=[]
         country_list=[]
         pipeline=[pipeline[0]]
@@ -1102,11 +1104,184 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 "end_year":final_year
                 }
         }
+
+    def get_csv(self,idx=None,start_year=None,end_year=None,sort=None,direction=None):
+        self.db = self.dbclient["antioquia"]
+        papers=[]
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            if start_year and not end_year:
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)})
+            elif end_year and not start_year:
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+            elif start_year and end_year:
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+            else:
+                cursor=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)})
+        else:
+            cursor=self.db['documents'].find()
+
+        if sort=="citations" and direction=="ascending":
+            cursor.sort({"citations_count":pymongo.ASCENDING})
+        if sort=="citations" and direction=="descending":
+            cursor.sort({"citations_count":pymongo.DESCENDING})
+        if sort=="year" and direction=="ascending":
+            cursor.sort({"year_published":pymongo.ASCENDING})
+        if sort=="year" and direction=="descending":
+            cursor.sort({"year_published":pymongo.DESCENDING})
+
+        csv_text="id\tpublication_type\ttitle\tsubtitle\tabstract\tbibtex\tstart_page\tend_page\tyear_published\tdate_published\t"
+        csv_text+="funding_organization\tfunding_details\tis_open_access\topen_access_status\tdoi\tjournal_name\tpublisher\tissn\t"
+        csv_text+="author_id\tauthor_name\taffiliation_id\taffiliation_name\taffiliation_country\n"
+
+        for paper in cursor:
+            csv_text+=str(paper["_id"])
+            csv_text+="\t"+paper["publication_type"]
+            csv_text+="\t"+paper["titles"][0]["title"].replace("\t","").replace("\n","").replace("\r","")
+            csv_text+="\t"+paper["subtitle"].replace("\t","").replace("\n","").replace("\r","")
+            csv_text+="\t"+paper["abstract"].replace("\t","").replace("\n","").replace("\r","")
+            csv_text+="\t"+paper["bibtex"].replace("\t","").replace("\n","").replace("\r","")
+            csv_text+="\t"+str(paper["start_page"])
+            csv_text+="\t"+str(paper["end_page"])
+            csv_text+="\t"+str(paper["year_published"])
+            try:
+                ts=int(paper["date_published"])
+                csv_text+="\t"+date.fromtimestamp(ts).strftime("%d-%m-%Y")
+            except:
+                csv_text+="\t"+""
+            csv_text+="\t"+paper["funding_organization"].replace("\t","").replace("\n","").replace("\r","")
+            csv_text+="\t"+paper["funding_details"][0].replace("\t","").replace("\n","").replace("\r","") if isinstance(paper["funding_details"],list) else "\t"+paper["funding_details"].replace("\t","").replace("\n","").replace("\r","")
+            csv_text+="\t"+str(paper["is_open_access"])
+            csv_text+="\t"+paper["open_access_status"]
+            doi_entry=""
+            for ext in paper["external_ids"]:
+                if ext["source"]=="doi":
+                    doi_entry=ext["id"]
+            csv_text+="\t"+str(doi_entry)
+
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
+            if source:
+                csv_text+="\t"+source["title"].replace("\t","").replace("\n","").replace("\r","")
+                csv_text+="\t"+source["publisher"]
+                serial_entry=""
+                for serial in source["serials"]:
+                    if serial["type"]=="issn" or serial["type"]=="eissn" or serial["type"]=="pissn":
+                        serial_entry=serial["value"]
+                csv_text+="\t"+serial_entry
+
+            csv_text+="\t"+str(paper["authors"][0]["id"])
+            author_db=self.db["authors"].find_one({"_id":paper["authors"][0]["id"]})
+            if author_db:
+                csv_text+="\t"+author_db["full_name"]
+            else:
+                csv_text+="\t"+""
+            aff_db=""
+            if "affiliations" in paper["authors"][0].keys():
+                if len(paper["authors"][0]["affiliations"])>0:
+                    csv_text+="\t"+str(paper["authors"][0]["affiliations"][0]["id"])
+                    aff_db=self.db["institutions"].find_one({"_id":paper["authors"][0]["affiliations"][0]["id"]})
+            if aff_db:
+                csv_text+="\t"+aff_db["name"]
+                country_entry=""
+                if "addresses" in aff_db.keys():
+                    if len(aff_db["addresses"])>0:
+                        country_entry=aff_db["addresses"][0]["country"]
+                csv_text+="\t"+country_entry
+            else:
+                csv_text+="\t"+""
+                csv_text+="\t"+""
+                csv_text+="\t"+""
+            csv_text+="\n"
+        return csv_text
+    
+    def get_json(self,idx=None,start_year=None,end_year=None,sort=None,direction=None):
+        self.db = self.dbclient["antioquia"]
+        papers=[]
+
+        if start_year:
+            try:
+                start_year=int(start_year)
+            except:
+                print("Could not convert start year to int")
+                return None
+        if end_year:
+            try:
+                end_year=int(end_year)
+            except:
+                print("Could not convert end year to int")
+                return None
+        if idx:
+            if start_year and not end_year:
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)})
+            elif end_year and not start_year:
+                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+            elif start_year and end_year:
+                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+            else:
+                cursor=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)})
+        else:
+            cursor=self.db['documents'].find()
+
+
+
+        if sort=="citations" and direction=="ascending":
+            cursor.sort({"citations_count":pymongo.ASCENDING})
+        if sort=="citations" and direction=="descending":
+            cursor.sort({"citations_count":pymongo.DESCENDING})
+        if sort=="year" and direction=="ascending":
+            cursor.sort({"year_published":pymongo.ASCENDING})
+        if sort=="year" and direction=="descending":
+            cursor.sort({"year_published":pymongo.DESCENDING})
+
+        for paper in cursor:
+            entry=paper
+            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
+            if source:
+                entry["source"]=source
+            authors=[]
+            for author in paper["authors"]:
+                au_entry=author
+                author_db=self.db["authors"].find_one({"_id":author["id"]})
+                if author_db:
+                    au_entry=author_db
+                affiliations=[]
+                for aff in author["affiliations"]:
+                    aff_entry=aff
+                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
+                    if aff_db:
+                        aff_entry=aff_db
+                    branches=[]
+                    if "branches" in aff.keys():
+                        for branch in aff["branches"]:
+                            branch_db=self.db["branches"].find_one({"_id":branch["id"]}) if "id" in branch.keys() else ""
+                            if branch_db:
+                                branches.append(branch_db)
+                    aff_entry["branches"]=branches
+                    affiliations.append(aff_entry)
+                au_entry["affiliations"]=affiliations
+                authors.append(au_entry)
+            entry["authors"]=authors
+            papers.append(entry)
+        return str(papers)
     
     def get_apc(self,idx=None,start_year=None,end_year=None):
         self.db = self.dbclient["antioquia"]
         initial_year=0
         final_year=0
+
+        base_year=2012
 
         if start_year:
             try:
@@ -1180,13 +1355,18 @@ class ColavInstitutionsApp(HunabkuPluginBase):
         ])
 
         c = CurrencyConverter()
+        now=date.today()
         for reg in self.db["documents"].aggregate(pipeline):
             value=0
+            if reg["year_published"]==now.year:
+                continue
             if reg["source"]["apc_currency"]=="USD":
-                value=reg["source"]["apc_charges"]
+                raw_value=reg["source"]["apc_charges"]
+                value=inflate(raw_value,reg["year_published"],to=base_year)
             else:
                 try:
-                    value=c.convert(reg["source"]["apc_charges"], reg["source"]["apc_currency"], 'USD')
+                    raw_value=c.convert(reg["source"]["apc_charges"], reg["source"]["apc_currency"], 'USD')
+                    value=inflate(raw_value,reg["year_published"],to=base_year)
                 except Exception as e:
                     print("Could not convert currency with error: ",e)
             if reg["year_published"] in entry["yearly"].keys():
@@ -1933,6 +2113,46 @@ class ColavInstitutionsApp(HunabkuPluginBase):
                 response=self.json.dumps(graduates),
                 status=200,
                 mimetype='application/json'
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="csv":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            sort=self.request.args.get('sort')
+            production_csv=self.get_csv(idx,start_year,end_year,sort,"descending")
+            if production_csv:
+                response = self.app.response_class(
+                response=production_csv,
+                status=200,
+                mimetype='text/csv',
+                headers={"Content-disposition":
+                 "attachment; filename=institutions.csv"}
+                )
+            else:
+                response = self.app.response_class(
+                response=self.json.dumps({"status":"Request returned empty"}),
+                status=204,
+                mimetype='application/json'
+                )
+        elif data=="json":
+            idx = self.request.args.get('id')
+            start_year=self.request.args.get('start_year')
+            end_year=self.request.args.get('end_year')
+            sort=self.request.args.get('sort')
+            production_json=self.get_json(idx,start_year,end_year,sort,"descending")
+            if production_json:
+                response = self.app.response_class(
+                response=production_json,
+                status=200,
+                mimetype='text/plain',
+                headers={"Content-disposition":
+                 "attachment; filename=institutions.json"}
                 )
             else:
                 response = self.app.response_class(
