@@ -368,9 +368,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
             {
                 "words":[{"x":"colombia","value":45},
                         {"x":"patients","value":32},
-                        {"x":"effect","value":30},
-                        {"x":"infection","value":28},
-                        {"x":"factors","value":12}],
+                        {"x":"effect","value":30}],
                 "total_papers":120,
                 "papers_count":65,
                 "cites_count":300,
@@ -394,8 +392,6 @@ class ColavFacultiesApp(HunabkuPluginBase):
             },
             {
                 "words":[{"x":"colombia","value":45},
-                        {"x":"study","value":32},
-                        {"x":"properties","value":30},
                         {"x":"characterization","value":18},
                         {"x":"activity","value":10}],
                 "total_papers":160,
@@ -422,9 +418,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
             {
                 "words":[{"x":"analysis","value":45},
                         {"x":"disease","value":22},
-                        {"x":"treatment","value":20},
-                        {"x":"model","value":12},
-                        {"x":"natural","value":2}],
+                        {"x":"treatment","value":20}],
                 "total_papers":260,
                 "papers_count":12,
                 "cites_count":30,
@@ -449,8 +443,6 @@ class ColavFacultiesApp(HunabkuPluginBase):
             {
                 "words":[{"x":"clinical","value":45},
                         {"x":"infection","value":12},
-                        {"x":"human","value":8},
-                        {"x":"review","value":8},
                         {"x":"vaccine","value":5}],
                 "total_papers":180,
                 "papers_count":20,
@@ -475,8 +467,6 @@ class ColavFacultiesApp(HunabkuPluginBase):
             },
             {
                 "words":[{"x":"colombia","value":75},
-                        {"x":"human","value":40},
-                        {"x":"rights","value":15},
                         {"x":"property","value":8},
                         {"x":"case","value":8}],
                 "total_papers":60,
