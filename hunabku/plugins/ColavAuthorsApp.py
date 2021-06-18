@@ -143,7 +143,7 @@ class ColavAuthorsApp(HunabkuPluginBase):
 
         pipeline.extend([
             {"$project":{
-                "_id":0,"year_published":1,"citations_count":1
+                "_id":0,"year_published":1,"citations_count":1,"citations":1
             }}
         ])
 
@@ -158,6 +158,7 @@ class ColavAuthorsApp(HunabkuPluginBase):
         entry["H5"]=self.hindex(cites5_list)
         entry["H"]=self.hindex(cites_list)
 
+        
         cites_pipeline.extend([
             {"$unwind":"$citations"},
             {"$lookup":{

@@ -142,7 +142,7 @@ class ColavFacultiesApp(HunabkuPluginBase):
 
         pipeline.extend([
             {"$project":{
-                "_id":0,"year_published":1,"citations_count":1
+                "_id":0,"year_published":1,"citations_count":1,"citations":1
             }}
         ])
 
