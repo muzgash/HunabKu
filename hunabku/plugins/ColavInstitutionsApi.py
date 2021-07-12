@@ -8,7 +8,6 @@ class ColavInstitutionsApi(HunabkuPluginBase):
 
     
     def get_production(self,idx=None,max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
-        self.db = self.dbclient["antioquia"]
         papers=[]
         total=0
         if start_year:
@@ -25,15 +24,15 @@ class ColavInstitutionsApi(HunabkuPluginBase):
                 return None
         if idx:
             if start_year and not end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)})
+                cursor=self.colav_db['documents'].find({"year_published":{"$gte":start_year},"authors.affiliations.id":ObjectId(idx)})
             elif end_year and not start_year:
-                cursor=self.db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+                cursor=self.colav_db['documents'].find({"year_published":{"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
             elif start_year and end_year:
-                cursor=self.db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
+                cursor=self.colav_db['documents'].find({"year_published":{"$gte":start_year,"$lte":end_year},"authors.affiliations.id":ObjectId(idx)})
             else:
-                cursor=self.db['documents'].find({"authors.affiliations.id":ObjectId(idx)})
+                cursor=self.colav_db['documents'].find({"authors.affiliations.id":ObjectId(idx)})
         else:
-            cursor=self.db['documents'].find()
+            cursor=self.colav_db['documents'].find()
 
         total=cursor.count()
         if not page:
@@ -66,25 +65,25 @@ class ColavInstitutionsApi(HunabkuPluginBase):
 
         for paper in cursor:
             entry=paper
-            source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
+            source=self.colav_db["sources"].find_one({"_id":paper["source"]["id"]})
             if source:
                 entry["source"]=source
             authors=[]
             for author in paper["authors"]:
                 au_entry=author
-                author_db=self.db["authors"].find_one({"_id":author["id"]})
+                author_db=self.colav_db["authors"].find_one({"_id":author["id"]})
                 if author_db:
                     au_entry=author_db
                 affiliations=[]
                 for aff in author["affiliations"]:
                     aff_entry=aff
-                    aff_db=self.db["institutions"].find_one({"_id":aff["id"]})
+                    aff_db=self.colav_db["institutions"].find_one({"_id":aff["id"]})
                     if aff_db:
                         aff_entry=aff_db
                     branches=[]
                     if "branches" in aff.keys():
                         for branch in aff["branches"]:
-                            branch_db=self.db["branches"].find_one({"_id":branch["id"]}) if "id" in branch.keys() else ""
+                            branch_db=self.colav_db["branches"].find_one({"_id":branch["id"]}) if "id" in branch.keys() else ""
                             if branch_db:
                                 branches.append(branch_db)
                     aff_entry["branches"]=branches
@@ -96,31 +95,38 @@ class ColavInstitutionsApi(HunabkuPluginBase):
         return {"data":papers,"count":len(papers),"page":page,"total_results":total}
     
     def get_info(self,idx):
-        self.db = self.dbclient["antioquia"]
-        institution = self.db['institutions'].find_one({"_id":ObjectId(idx)})
+        institution = self.colav_db['institutions'].find_one({"_id":ObjectId(idx)})
         if institution:
             entry={"id":institution["_id"],
                 "name":institution["name"],
                 "external_urls":institution["external_urls"],
                 "departments":[],
                 "faculties":[],
+                "groups":[],
                 "area_groups":[],
                 "logo":institution["logo_url"]
             }
 
-            for dep in self.db['branches'].find({"type":"department","relations.id":ObjectId(idx)}):
+            for dep in self.colav_db['branches'].find({"type":"department","relations.id":ObjectId(idx)}):
                 dep_entry={
                     "name":dep["name"],
                     "id":str(dep["_id"])
                 }
                 entry["departments"].append(dep_entry)
             
-            for fac in self.db['branches'].find({"type":"faculty","relations.id":ObjectId(idx)}):
+            for fac in self.colav_db['branches'].find({"type":"faculty","relations.id":ObjectId(idx)}):
                 fac_entry={
                     "name":fac["name"],
                     "id":str(fac["_id"])
                 }
                 entry["faculties"].append(fac_entry)
+            
+            for grp in self.colav_db['branches'].find({"type":"group","relations.id":ObjectId(idx)}):
+                grp_entry={
+                    "name":grp["name"],
+                    "id":str(grp["_id"])
+                }
+                entry["groups"].append(grp_entry)
             
             return entry
         else:

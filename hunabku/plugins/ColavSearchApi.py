@@ -7,10 +7,9 @@ class ColavSearchApi(HunabkuPluginBase):
         super().__init__(hunabku)
 
     def search_author(self,keywords="",affiliation="",country="",max_results=100,page=1):
-        self.db = self.dbclient["antioquia"]
 
         if keywords:
-            cursor=self.db['authors'].find({"$text":{"$search":keywords}},{ "score": { "$meta": "textScore" } }).sort([("score", { "$meta": "textScore" } )])
+            cursor=self.colav_db['authors'].find({"$text":{"$search":keywords}},{ "score": { "$meta": "textScore" } }).sort([("score", { "$meta": "textScore" } )])
             pipeline=[{"$match":{"$text":{"$search":keywords}}}]
             aff_pipeline=[
                 {"$match":{"$text":{"$search":keywords}}},
@@ -19,7 +18,7 @@ class ColavSearchApi(HunabkuPluginBase):
                 {"$group":{"_id":"$affiliation"}}
             ]
         else:
-            cursor=self.db['authors'].find()
+            cursor=self.colav_db['authors'].find()
             pipeline=[]
             aff_pipeline=[
                 {"$unwind":"$affiliations"},{"$project":{"affiliations":1}},
@@ -27,7 +26,7 @@ class ColavSearchApi(HunabkuPluginBase):
                 {"$group":{"_id":"$affiliation"}}
             ]
 
-        affiliations=[reg["_id"] for reg in self.db["authors"].aggregate(aff_pipeline) if "_id" in reg.keys()]
+        affiliations=[reg["_id"] for reg in self.colav_db["authors"].aggregate(aff_pipeline) if "_id" in reg.keys()]
 
         countries=[]
         country_list=[]
@@ -43,7 +42,7 @@ class ColavSearchApi(HunabkuPluginBase):
             {"$project":{"affiliations.addresses.country_code":1,"affiliations.addresses.country":1,"_id":0}},
             {"$unwind":"$affiliations"}
         ])
-        for reg in self.db["authors"].aggregate(pipeline,allowDiskUse=False):
+        for reg in self.colav_db["authors"].aggregate(pipeline,allowDiskUse=False):
             country=reg["affiliations"]["addresses"][0]["country_code"]
             if not country in country_list:
                 country_list.append(country)
@@ -81,7 +80,7 @@ class ColavSearchApi(HunabkuPluginBase):
                     if len(author["affiliations"])>0:
                         entry["affiliation"]=author["affiliations"][-1]
                         if "id" in entry["affiliation"].keys():
-                            affdb=self.db["institutions"].find_one({"_id":entry["affiliation"]["id"]})
+                            affdb=self.colav_db["institutions"].find_one({"_id":entry["affiliation"]["id"]})
                             entry["affiliation"]["logo_url"]=affdb["logo_url"]
                 author_list.append(entry)
     
@@ -99,13 +98,12 @@ class ColavSearchApi(HunabkuPluginBase):
             return None
 
     def search_branch(self,branch,keywords="",country="",max_results=100,page=1):
-        self.db = self.dbclient["antioquia"]
 
         if keywords:
             if country:
-                cursor=self.db['branches'].find({"$text":{"$search":keywords},"type":branch,"addresses.country_code":country})
+                cursor=self.colav_db['branches'].find({"$text":{"$search":keywords},"type":branch,"addresses.country_code":country})
             else:
-                cursor=self.db['branches'].find({"$text":{"$search":keywords},"type":branch})
+                cursor=self.colav_db['branches'].find({"$text":{"$search":keywords},"type":branch})
             pipeline=[{"$match":{"$text":{"$search":keywords},"type":branch}}]
             aff_pipeline=[
                 {"$match":{"$text":{"$search":keywords},"type":branch}},
@@ -115,9 +113,9 @@ class ColavSearchApi(HunabkuPluginBase):
             ]
         else:
             if country:
-                cursor=self.db['branches'].find({"type":branch,"addresses.country_code":country})
+                cursor=self.colav_db['branches'].find({"type":branch,"addresses.country_code":country})
             else:
-                cursor=self.db['branches'].find({"type":branch})
+                cursor=self.colav_db['branches'].find({"type":branch})
             pipeline=[]
             aff_pipeline=[
                 {"$project":{"relations":1}},
@@ -146,7 +144,7 @@ class ColavSearchApi(HunabkuPluginBase):
 
         pipeline.append({"$group":{"_id":{"country_code":"$addresses.country_code","country":"$addresses.country"}}})
         countries=[]
-        for res in self.db["branches"].aggregate(pipeline):
+        for res in self.colav_db["branches"].aggregate(pipeline):
             reg=res["_id"]
             if reg["country_code"] and reg["country"]:
                 print(res)
@@ -154,7 +152,7 @@ class ColavSearchApi(HunabkuPluginBase):
                 if not country in countries:
                     countries.append(country)
 
-        affiliations=[reg["_id"] for reg in self.db["branches"].aggregate(aff_pipeline)]
+        affiliations=[reg["_id"] for reg in self.colav_db["branches"].aggregate(aff_pipeline)]
         
 
         if cursor:
@@ -189,18 +187,17 @@ class ColavSearchApi(HunabkuPluginBase):
             return None
 
     def search_institution(self,keywords="",country="",max_results=100,page=1):
-        self.db = self.dbclient["antioquia"]
         if keywords:
             if country:
-                cursor=self.db['institutions'].find({"$text":{"$search":keywords},"addresses.country_code":country})
+                cursor=self.colav_db['institutions'].find({"$text":{"$search":keywords},"addresses.country_code":country})
             else:
-                cursor=self.db['institutions'].find({"$text":{"$search":keywords}})
+                cursor=self.colav_db['institutions'].find({"$text":{"$search":keywords}})
             country_pipeline=[{"$match":{"$text":{"$search":keywords}}}]
         else:
             if country:
-                cursor=self.db['institutions'].find({"addresses.country_code":country})
+                cursor=self.colav_db['institutions'].find({"addresses.country_code":country})
             else:
-                cursor=self.db['institutions'].find()
+                cursor=self.colav_db['institutions'].find()
             country_pipeline=[]
             
 
@@ -212,7 +209,7 @@ class ColavSearchApi(HunabkuPluginBase):
                 }
         )
         countries=[]
-        for res in self.db["institutions"].aggregate(country_pipeline):
+        for res in self.colav_db["institutions"].aggregate(country_pipeline):
             reg=res["_id"]
             if reg["country_code"] and reg["country"]:
                 country={"country_code":reg["country_code"][0],"country":reg["country"][0]}
@@ -261,7 +258,6 @@ class ColavSearchApi(HunabkuPluginBase):
             return None
 
     def search_documents(self,keywords="",country="",max_results=100,page=1,start_year=None,end_year=None,sort=None,direction=None):
-        self.db = self.dbclient["antioquia"]
         initial_year=0
         final_year=0
 
@@ -279,29 +275,29 @@ class ColavSearchApi(HunabkuPluginBase):
                 return None
 
         if keywords:
-            result=self.db['documents'].find({"$text":{"$search":keywords}},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
+            result=self.colav_db['documents'].find({"$text":{"$search":keywords}},{"year_published":1}).sort([("year_published",ASCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     initial_year=result[0]["year_published"]
-            result=self.db['documents'].find({"$text":{"$search":keywords}},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
+            result=self.colav_db['documents'].find({"$text":{"$search":keywords}},{"year_published":1}).sort([("year_published",DESCENDING)]).limit(1)
             if result:
                 result=list(result)
                 if len(result)>0:
                     final_year=result[0]["year_published"]
             if country:
-                cursor=self.db['documents'].find({"$text":{"$search":keywords},"addresses.country_code":country})
+                cursor=self.colav_db['documents'].find({"$text":{"$search":keywords},"addresses.country_code":country})
             else:
-                cursor=self.db['documents'].find({"$text":{"$search":keywords}})
+                cursor=self.colav_db['documents'].find({"$text":{"$search":keywords}})
             country_pipeline=[{"$match":{"$text":{"$search":keywords}}}]
             aff_pipeline=[
                 {"$match":{"$text":{"$search":keywords}}}
             ]
         else:
             if country:
-                cursor=self.db['documents'].find({"addresses.country_code":country})
+                cursor=self.colav_db['documents'].find({"addresses.country_code":country})
             else:
-                cursor=self.db['documents'].find()
+                cursor=self.colav_db['documents'].find()
             country_pipeline=[]
             aff_pipeline=[]
 
@@ -310,7 +306,7 @@ class ColavSearchApi(HunabkuPluginBase):
                 {"$group":{"_id":"$_id","affiliation":{"$last":"$affiliations"}}},
                 {"$group":{"_id":"$affiliation"}}
             ])
-        affiliations=[reg["_id"] for reg in self.db["authors"].aggregate(aff_pipeline)]
+        affiliations=[reg["_id"] for reg in self.colav_db["authors"].aggregate(aff_pipeline)]
             
 
         country_pipeline.append(
@@ -321,7 +317,7 @@ class ColavSearchApi(HunabkuPluginBase):
                 }
         )
         countries=[]
-        for res in self.db["institutions"].aggregate(country_pipeline):
+        for res in self.colav_db["institutions"].aggregate(country_pipeline):
             reg=res["_id"]
             if reg["country_code"] and reg["country"]:
                 country={"country_code":reg["country_code"][0],"country":reg["country"][0]}
@@ -370,16 +366,16 @@ class ColavSearchApi(HunabkuPluginBase):
                     "citations_count":paper["citations_count"]
                 }
 
-                source=self.db["sources"].find_one({"_id":paper["source"]["id"]})
+                source=self.colav_db["sources"].find_one({"_id":paper["source"]["id"]})
                 if source:
                     entry["source"]={"name":source["title"],"id":source["_id"]}
                 
                 authors=[]
                 for author in paper["authors"]:
-                    reg_au=self.db["authors"].find_one({"_id":author["id"]})
+                    reg_au=self.colav_db["authors"].find_one({"_id":author["id"]})
                     reg_aff=""
                     if author["affiliations"]:
-                        reg_aff=self.db["institutions"].find_one({"_id":author["affiliations"][0]["id"]})
+                        reg_aff=self.colav_db["institutions"].find_one({"_id":author["affiliations"][0]["id"]})
                     author_entry={
                         "id":reg_au["_id"],
                         "full_name":reg_au["full_name"],

@@ -87,6 +87,7 @@ class HunabkuPluginBase:
         self.json = json
         self.logger = hunabku.logger
         self.hunabku = hunabku
+        self.colav_db = hunabku.colav_db
         _dumps = self.json.dumps
         _dump = self.json.dump
 
