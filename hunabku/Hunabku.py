@@ -48,7 +48,7 @@ class Hunabku:
         self.dbclient = MongoClient(dburi)
         self.ip = ip
         self.port = port
-        self.colav_db=self.dbclient["antioquia"]
+        self.colav_db=self.dbclient["colombia"]
         self.info_level = info_level
         self.apikey = apikey
         self.apidoc_dir = 'hunabku_website'
